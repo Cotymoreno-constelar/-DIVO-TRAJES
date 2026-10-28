@@ -1,0 +1,6 @@
+{
+  "name": "DIVO · Flujograma Estratégico",
+  "description": "Plan de flujograma de trabajo, arquitectura de información y UX Writing para Coty y el ecosistema DIVO.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
