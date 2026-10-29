@@ -7,10 +7,11 @@ import {
   Users, 
   Printer, 
   Play,
-  Eye
+  Eye,
+  BarChart3
 } from 'lucide-react';
 
-export type StrategyTab = 'flujograma' | 'papel' | 'arquitectura-web' | 'ux-writing' | 'equipo' | 'imprimible';
+export type StrategyTab = 'flujograma' | 'seguimiento' | 'papel' | 'arquitectura-web' | 'ux-writing' | 'equipo' | 'imprimible';
 
 interface HeaderProps {
   activeTab: StrategyTab;
@@ -61,6 +62,18 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <Workflow className="w-3.5 h-3.5 text-amber-400" />
             <span>Flujograma Interactivo</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('seguimiento')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer whitespace-nowrap ${
+              activeTab === 'seguimiento'
+                ? 'bg-amber-500/20 text-amber-200 border border-amber-400/40 shadow-sm shadow-amber-500/10'
+                : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-900 border border-transparent'
+            }`}
+          >
+            <BarChart3 className="w-3.5 h-3.5 text-amber-400" />
+            <span>Seguimiento & Reportes</span>
           </button>
 
           <button

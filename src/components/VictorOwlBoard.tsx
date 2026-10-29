@@ -5,6 +5,7 @@ import {
 import { VictorTask, TaskStatus, TaskRequester, TaskPriority, DevSuggestion } from '../types/flow';
 import { useCloudSync } from '../context/CloudSyncContext';
 import { CloudSyncBanner } from './CloudSyncBanner';
+import { StrategicPlanTracker } from './StrategicPlanTracker';
 import {
   MAX_TITLE_LENGTH,
   MAX_MODULE_LENGTH,
@@ -27,8 +28,8 @@ import {
 } from 'lucide-react';
 
 interface VictorOwlBoardProps {
-  activeSection?: 'board' | 'backlog' | 'print';
-  onNavigateSection?: (section: 'board' | 'backlog' | 'print') => void;
+  activeSection?: 'board' | 'reports_spec' | 'backlog' | 'print';
+  onNavigateSection?: (section: 'board' | 'reports_spec' | 'backlog' | 'print') => void;
 }
 
 export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
@@ -48,6 +49,7 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
   } = useCloudSync();
 
   // Filters & State
+  const [filterCategory, setFilterCategory] = useState<'all' | 'campos' | 'reportes' | 'operatividad'>('all');
   const [filterRequester, setFilterRequester] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -90,8 +92,16 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
   const countSinNovedades = tasks.filter(t => t.status === 'sin_novedades').length;
   const countTerminadas = tasks.filter(t => t.status === 'terminada' || t.status === 'probada').length;
 
+  const countCampos = tasks.filter(t => t.id.startsWith('campo-divo-')).length;
+  const countReportes = tasks.filter(t => t.id.startsWith('rep-divo-')).length;
+  const countOperatividad = tasks.filter(t => !t.id.startsWith('campo-divo-') && !t.id.startsWith('rep-divo-')).length;
+
   // Filter tasks
   const filteredTasks = tasks.filter(t => {
+    if (filterCategory === 'campos' && !t.id.startsWith('campo-divo-')) return false;
+    if (filterCategory === 'reportes' && !t.id.startsWith('rep-divo-')) return false;
+    if (filterCategory === 'operatividad' && (t.id.startsWith('campo-divo-') || t.id.startsWith('rep-divo-'))) return false;
+
     if (filterRequester === 'listo') {
       if (t.status !== 'finalizado') return false;
     } else if (filterRequester !== 'all' && t.requestedBy !== filterRequester) {
@@ -104,7 +114,8 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
       return (
         t.title.toLowerCase().includes(q) ||
         t.observations.toLowerCase().includes(q) ||
-        t.module.toLowerCase().includes(q)
+        t.module.toLowerCase().includes(q) ||
+        (t.specs?.toLowerCase().includes(q) ?? false)
       );
     }
     return true;
@@ -241,7 +252,9 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
       case 'alta':
         return <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">Alta</span>;
       case 'media':
-        return <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-neutral-800 text-neutral-400 border border-neutral-700">Media</span>;
+        return <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">Media</span>;
+      case 'baja':
+        return <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-neutral-800 text-neutral-400 border border-neutral-700">Baja</span>;
     }
   };
 
@@ -340,6 +353,62 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
               </div>
             </div>
 
+          </div>
+
+          {/* Quick Category Segmentation: Operatividad vs 10 Campos Nuevos vs 27 Reportes */}
+          <div className="p-3 rounded-2xl bg-neutral-900/70 border border-cyan-500/25 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-neutral-400 font-semibold px-2">Bloque de Desarrollo:</span>
+              <button
+                onClick={() => setFilterCategory('all')}
+                className={`px-3 py-1.5 rounded-xl font-semibold transition-colors cursor-pointer ${
+                  filterCategory === 'all'
+                    ? 'bg-cyan-500/20 text-cyan-200 border border-cyan-400/40'
+                    : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800'
+                }`}
+              >
+                Todo el Tablero ({tasks.length})
+              </button>
+              <button
+                onClick={() => setFilterCategory('campos')}
+                className={`px-3 py-1.5 rounded-xl font-semibold transition-colors cursor-pointer ${
+                  filterCategory === 'campos'
+                    ? 'bg-red-500/20 text-red-200 border border-red-400/40'
+                    : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800'
+                }`}
+              >
+                1. Campos Nuevos · Hacer Primero ({countCampos})
+              </button>
+              <button
+                onClick={() => setFilterCategory('reportes')}
+                className={`px-3 py-1.5 rounded-xl font-semibold transition-colors cursor-pointer ${
+                  filterCategory === 'reportes'
+                    ? 'bg-amber-500/20 text-amber-200 border border-amber-400/40'
+                    : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800'
+                }`}
+              >
+                2. Reportes Owl & Sly Soft ({countReportes})
+              </button>
+              <button
+                onClick={() => setFilterCategory('operatividad')}
+                className={`px-3 py-1.5 rounded-xl font-semibold transition-colors cursor-pointer ${
+                  filterCategory === 'operatividad'
+                    ? 'bg-blue-500/20 text-blue-200 border border-blue-400/40'
+                    : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800'
+                }`}
+              >
+                Operatividad Inicial ({countOperatividad})
+              </button>
+            </div>
+
+            {onNavigateSection && (
+              <button
+                onClick={() => onNavigateSection('reports_spec')}
+                className="px-3 py-1.5 rounded-xl bg-neutral-950 hover:bg-neutral-800 text-cyan-300 border border-cyan-500/30 font-medium cursor-pointer"
+              >
+                Ver documento técnico de Fórmulas & Etapas →
+              </button>
+            )}
           </div>
 
           {/* Filter and View Controls Bar */}
@@ -763,6 +832,13 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
       )}
 
       {/* =========================================================
+          VISTA 1.5: ESPECIFICACIÓN DE LOS 10 CAMPOS NUEVOS Y 27 REPORTES
+         ========================================================= */}
+      {activeSection === 'reports_spec' && (
+        <StrategicPlanTracker variant="victor" hideCloudBanner />
+      )}
+
+      {/* =========================================================
           VISTA 2: BACKLOG DE 10 IDEAS ESTRATÉGICAS PARA OWL
          ========================================================= */}
       {activeSection === 'backlog' && (
@@ -992,7 +1068,8 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                   >
                     <option value="urgente">🔴 Urgente</option>
                     <option value="alta">🟡 Alta</option>
-                    <option value="media">⚪ Media</option>
+                    <option value="media">🔵 Media</option>
+                    <option value="baja">⚪ Baja</option>
                   </select>
                 </div>
 
@@ -1168,7 +1245,8 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                   >
                     <option value="urgente">🔴 Urgente</option>
                     <option value="alta">🟡 Alta</option>
-                    <option value="media">⚪ Media</option>
+                    <option value="media">🔵 Media</option>
+                    <option value="baja">⚪ Baja</option>
                   </select>
                 </div>
 

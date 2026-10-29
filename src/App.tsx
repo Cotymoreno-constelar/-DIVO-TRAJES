@@ -13,6 +13,7 @@ import { TeamWorkplan } from './components/TeamWorkplan';
 import { PrintableWorkPlan } from './components/PrintableWorkPlan';
 import { CustomerJourneySimulator } from './components/CustomerJourneySimulator';
 import { VictorStandaloneApp } from './components/VictorStandaloneApp';
+import { StrategicPlanTracker } from './components/StrategicPlanTracker';
 import { useCloudSync } from './context/CloudSyncContext';
 import { 
   Sparkles, 
@@ -167,6 +168,10 @@ export default function App() {
             />
           )}
 
+          {activeTab === 'seguimiento' && (
+            <StrategicPlanTracker variant="estrategia" />
+          )}
+
           {activeTab === 'papel' && <PaperInspector />}
 
           {activeTab === 'arquitectura-web' && <WebArchitecture />}
@@ -251,17 +256,17 @@ export default function App() {
 
               <div className="space-y-1.5">
                 <h2 className="font-serif text-2xl font-bold text-amber-100">
-                  DIVO · Plan Estratégico & Flujograma
+                  DIVO · Plan Estratégico & Seguimiento
                 </h2>
                 <p className="text-xs sm:text-sm text-neutral-300 leading-relaxed">
-                  Aplicación exclusiva para Coty y el equipo comercial: Flujograma interactivo, Visor del Papel manuscrito, Arquitectura Web, UX Writing, Organigrama (Yasmín, Bianca, Tere, Valen, Daniela) y Papel Imprimible.
+                  Aplicación para Coty y el equipo comercial: Flujograma interactivo, Seguimiento del Plan y los 27 Reportes (Owl + Sly Soft), Visor del Papel, Arquitectura Web, UX Writing, Organigrama y Papel Imprimible.
                 </p>
               </div>
 
               <ul className="space-y-1.5 text-xs text-neutral-400 pt-2 border-t border-neutral-800/80">
-                <li>• Sin pestañas de programación ni requerimientos técnicos mezclados</li>
-                <li>• Simulador de recorridos de clientes y guía UX Writing</li>
-                <li>• Hoja ejecutiva A4 imprimible para mesa de dirección</li>
+                <li>• Seguimiento en vivo de los 10 Campos Nuevos, 27 Reportes y 4 Etapas</li>
+                <li>• Metas de negocio (1.000 notas/mes, Ticket $200k, Ausentismo ≤ 20%, Línea base 31/03)</li>
+                <li>• Resoluciones de Dirección sincronizadas automáticamente en la nube</li>
               </ul>
             </div>
 
@@ -310,14 +315,14 @@ export default function App() {
                   OWL SYSTEM · Tablero de Víctor
                 </h2>
                 <p className="text-xs sm:text-sm text-neutral-300 leading-relaxed">
-                  Aplicación 100% independiente dedicada al desarrollo del sistema Owl: las 16 solicitudes de Coty y Yasmín (con las marcadas en LISTO como Finalizadas), fechas límite editables, Kanban y Backlog de 10 ideas.
+                  Aplicación 100% independiente dedicada al desarrollo de Owl y Sly Soft: incluye los 10 Campos Nuevos obligatorios, los 27 Reportes del plan de marketing, las solicitudes operativas y el Backlog de evolución.
                 </p>
               </div>
 
               <ul className="space-y-1.5 text-xs text-neutral-400 pt-2 border-t border-neutral-800/80">
-                <li>• Link aislado para enviarle a Víctor (no muestra el resto de la app)</li>
-                <li>• Vistas propias: Solicitudes Activas, Backlog de Ideas y Minuta PDF</li>
-                <li>• Fechas límite, estados y observaciones modificables en vivo</li>
+                <li>• Link aislado para enviarle a Víctor con sincronización en la nube</li>
+                <li>• Vistas propias: Solicitudes Activas, Plan de Reportes & Campos (37), Backlog y Minuta</li>
+                <li>• Fechas límite, estados, fórmulas fijas y observaciones modificables en vivo</li>
               </ul>
             </div>
 

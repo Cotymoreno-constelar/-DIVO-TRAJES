@@ -61,7 +61,7 @@ function isValidOwlTask(data: Record<string, unknown>, auth: AuthContext): boole
     typeof data.title === 'string' && data.title.length >= 1 && data.title.length <= 300 &&
     typeof data.requestedBy === 'string' && ['Coty', 'Yasmín', 'Sucursales', 'Administración'].includes(data.requestedBy) &&
     typeof data.module === 'string' && data.module.length >= 1 && data.module.length <= 100 &&
-    typeof data.priority === 'string' && ['urgente', 'alta', 'media'].includes(data.priority) &&
+    typeof data.priority === 'string' && ['urgente', 'alta', 'media', 'baja'].includes(data.priority) &&
     typeof data.deadline === 'string' && data.deadline.length === 10 && DATE_REGEX.test(data.deadline) &&
     typeof data.status === 'string' && ['sin_novedades', 'en_curso', 'terminada', 'probada', 'bloqueada', 'finalizado'].includes(data.status) &&
     typeof data.observations === 'string' && data.observations.length >= 1 && data.observations.length <= 2000 &&

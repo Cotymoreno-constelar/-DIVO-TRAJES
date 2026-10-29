@@ -1,4 +1,5 @@
 import { FlowNode, TeamMember, BranchLocation, WebSection, CustomerJourney, VictorTask, DevSuggestion } from '../types/flow';
+import { VICTOR_REPORTES_PACK_TASKS } from './reportsPlanData';
 
 export const TEAM_MEMBERS: TeamMember[] = [
   {
@@ -88,16 +89,16 @@ export const TEAM_MEMBERS: TeamMember[] = [
   {
     id: 'victor',
     name: 'Víctor',
-    role: 'Líder de Desarrollo & Arquitectura del Sistema Owl',
-    focusArea: 'Sistema Owl CRM, Integraciones API (Kommo, Sky Soft) & Reportes Gerenciales',
+    role: 'Líder de Desarrollo · Arquitectura Owl & Cruces Sly Soft',
+    focusArea: 'Sistema Owl CRM, Cruce con Sly Soft (Facturación), 10 Campos Base & 27 Reportes',
     associatedNodes: ['node-owl', 'node-kommo', 'node-skysoft', 'node-web'],
     avatarColor: 'from-cyan-400 to-blue-600',
-    quote: '"Un sistema robusto es el que no se nota: hace que Yasmín atienda sin fricción y Coty tome decisiones con números exactos en tiempo real."',
+    quote: '"Un sistema robusto es el que no se nota: hace que Yasmín atienda sin fricción y Coty tome decisiones con números exactos y fórmulas fijas en tiempo real."',
     responsibilities: [
-      'Desarrollo y mantenimiento continuo del sistema Owl CRM.',
-      'Integración y sincronización de catálogo, stock y citas entre sistemas.',
-      'Generación de reportes gerenciales para Coty (conversión por sucursal, ticket promedio, rentabilidad).',
-      'Digitalización de la ficha de medidas y modistería para el equipo de Yasmín.'
+      'Implementación prioritaria de los 10 Campos Nuevos en Owl y Sly Soft (Etapa 1: línea base al 31/03).',
+      'Desarrollo escalonado de los 27 Reportes del plan de marketing (Citas, Emma, Facturación Sly Soft, CAC/ROAS y Tablero).',
+      'Garantizar exportación Excel/CSV, permisos por sucursal vs Dirección e historial auditado sin borrado de estados.',
+      'Mantenimiento continuo de Owl CRM, panel operativo de Yasmín y cruce de ID de cita con Sly Soft.'
     ]
   }
 ];
@@ -1040,7 +1041,9 @@ export const VICTOR_INITIAL_TASKS: VictorTask[] = [
     observations: 'LISTO / FINALIZADO. Desplegado para registro de medidas corporales exactas en probador.',
     createdAt: '2026-10-14',
     specs: 'Campos específicos para Trajes (hombro, tiro, basta) y Vestidos (escote, pinzas, ruedo).'
-  }
+  },
+  // Pack Oficial: 10 Campos Nuevos + 27 Reportes del Plan de Marketing (Divo Trajes y Divo Fem)
+  ...VICTOR_REPORTES_PACK_TASKS
 ];
 
 export const DEV_SUGGESTIONS: DevSuggestion[] = [

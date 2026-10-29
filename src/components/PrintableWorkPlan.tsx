@@ -4,6 +4,10 @@ import {
   TEAM_MEMBERS, 
   BRANCH_LOCATIONS 
 } from '../data/constelarData';
+import {
+  DEVELOPMENT_ORDER_STAGES,
+  OFFICIAL_FORMULAS,
+} from '../data/reportsPlanData';
 import { 
   Printer, 
   Sparkles, 
@@ -215,6 +219,40 @@ export const PrintableWorkPlan: React.FC = () => {
               <input type="checkbox" className="mt-0.5" />
               <span>Activar protocolo de post-venta para pedir foto de la noche de gala a las 48h.</span>
             </div>
+          </div>
+        </div>
+
+        {/* 6. HOJA DE RUTA DE DATOS Y REPORTES (OWL + SLY SOFT) */}
+        <div className="space-y-3 pt-4 border-t border-neutral-800 print:border-black/20">
+          <h3 className="font-serif text-lg font-bold text-amber-200 print:text-black">
+            6. Seguimiento de Reportes y Campos Nuevos (Owl CRM &amp; Sly Soft)
+          </h3>
+          <p className="text-xs text-neutral-300 print:text-neutral-800 leading-relaxed">
+            Metas rectoras del plan: <strong>1.000 notas mensuales</strong> en Sly Soft, trayectoria de ticket promedio hacia <strong>$200.000</strong>, ausentismo <strong>≤ 20%</strong> (cerrando el 14,5% pendiente), carga de motivo en "No alquiló" <strong>≥ 95%</strong>, mix casamientos + quinceaños del <strong>60% en septiembre</strong> y línea base de CAC / Costo cita asistida / ROAS al <strong>31/03</strong>.
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            {DEVELOPMENT_ORDER_STAGES.map((stage) => (
+              <div
+                key={stage.stageNumber}
+                className="p-3 rounded-xl bg-neutral-950 print:bg-white print:border print:border-neutral-300 border border-neutral-800"
+              >
+                <div className="font-serif font-bold text-amber-300 print:text-black">
+                  Etapa {stage.stageNumber}: {stage.label}
+                </div>
+                <div className="text-[11px] text-neutral-300 print:text-neutral-700 mt-0.5">
+                  {stage.subtitle}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] pt-1">
+            {OFFICIAL_FORMULAS.map((f, i) => (
+              <div key={i} className="text-neutral-300 print:text-neutral-800">
+                <strong className="text-neutral-100 print:text-black">{f.metric}:</strong> {f.formula}
+              </div>
+            ))}
           </div>
         </div>
 

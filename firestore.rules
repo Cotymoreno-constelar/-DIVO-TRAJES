@@ -81,7 +81,7 @@ service cloud.firestore {
 
     function isValidTaskIdsList(listVal) {
       return listVal is list &&
-        listVal.size() <= 100 &&
+        listVal.size() <= 250 &&
         (
           listVal.size() == 0 ||
           (
@@ -152,7 +152,7 @@ service cloud.firestore {
         (data.requestedBy in ['Coty', 'Yasmín', 'Sucursales', 'Administración']) &&
         data.module is string && data.module.size() >= 1 && data.module.size() <= 100 &&
         data.priority is string && data.priority.size() >= 4 && data.priority.size() <= 10 &&
-        (data.priority in ['urgente', 'alta', 'media']) &&
+        (data.priority in ['urgente', 'alta', 'media', 'baja']) &&
         data.deadline is string && data.deadline.size() == 10 &&
         data.deadline.matches('^\\d{4}-\\d{2}-\\d{2}$') &&
         data.status is string && data.status.size() >= 7 && data.status.size() <= 15 &&

@@ -298,7 +298,9 @@ export const CloudSyncBanner: React.FC<CloudSyncBannerProps> = ({
                 )}
               </div>
               <p className="text-[11px] text-neutral-300 mt-0.5 leading-relaxed">
-                Para que las modificaciones hechas en el link **queden guardadas en la nube** y las vean tanto vos como Víctor en cualquier PC, conectá con Google. Tus cambios actuales en pantalla se conservan y suben automáticamente.
+                Para que las modificaciones hechas en el link{' '}
+                <strong className="text-amber-200 font-semibold">queden guardadas en la nube</strong>{' '}
+                y las vean tanto vos como Víctor en cualquier PC, conectá con Google. Tus cambios actuales en pantalla se conservan y suben automáticamente.
               </p>
             </div>
           </div>
@@ -355,7 +357,7 @@ export const CloudSyncBanner: React.FC<CloudSyncBannerProps> = ({
               rel="noopener noreferrer"
               className="text-cyan-300 underline hover:text-cyan-200"
             >
-              Firebase Console → Authentication → Settings → Authorized domains
+              Firebase Console → Authentication → Configuración → Dominios autorizados
             </a>
             , o usá el enlace compartido directo de AI Studio donde ya está autorizado.
           </p>

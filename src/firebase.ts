@@ -25,14 +25,14 @@ export const MAX_ID_LENGTH = 128;
 export const MAX_WORKSPACE_NAME_LENGTH = 120;
 export const MAX_TEAM_CODE_LENGTH = 32;
 export const MAX_DISPLAY_NAME_LENGTH = 60;
-export const MAX_TASK_IDS_COUNT = 100;
+export const MAX_TASK_IDS_COUNT = 250;
 export const MAX_TITLE_LENGTH = 300;
 export const MAX_MODULE_LENGTH = 100;
 export const MAX_OBSERVATIONS_LENGTH = 2000;
 export const MAX_SPECS_LENGTH = 2000;
 
 const ALLOWED_REQUESTERS: TaskRequester[] = ['Coty', 'Yasmín', 'Sucursales', 'Administración'];
-const ALLOWED_PRIORITIES: TaskPriority[] = ['urgente', 'alta', 'media'];
+const ALLOWED_PRIORITIES: TaskPriority[] = ['urgente', 'alta', 'media', 'baja'];
 const ALLOWED_STATUSES: TaskStatus[] = [
   'sin_novedades',
   'en_curso',

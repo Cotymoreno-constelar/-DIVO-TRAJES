@@ -61,7 +61,7 @@
         },
         "taskIds": {
           "type": "array",
-          "description": "Bounded ordered list (max 100) of active task IDs in the tasks subcollection."
+          "description": "Bounded ordered list (max 250) of active task IDs in the tasks subcollection."
         },
         "createdAt": {
           "type": "string",
@@ -181,7 +181,7 @@
         "priority": {
           "type": "string",
           "description": "Urgency level of the task.",
-          "enum": ["urgente", "alta", "media"],
+          "enum": ["urgente", "alta", "media", "baja"],
           "minLength": 4,
           "maxLength": 10
         },

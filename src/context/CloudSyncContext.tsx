@@ -26,9 +26,11 @@ import {
   sanitizeId,
 } from '../firebase';
 import { VICTOR_INITIAL_TASKS } from '../data/constelarData';
+import { VICTOR_REPORTES_PACK_TASKS } from '../data/reportsPlanData';
 import { VictorTask, TaskStatus } from '../types/flow';
 
 export const TASKS_STORAGE_KEY = 'divo_victor_tasks_v3';
+export const SEEDED_PACK_IDS_STORAGE_KEY = 'divo_seeded_pack_ids_v1';
 export const MEETING_DATE_STORAGE_KEY = 'divo_sync_meeting_date_v1';
 
 export type SyncState = 'local' | 'connecting' | 'synced' | 'saving' | 'error';
@@ -74,13 +76,54 @@ function loadLocalTasks(): { tasks: VictorTask[]; differsFromInitial: boolean } 
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
         const sanitized = parsed.map((t: VictorTask) => sanitizeTaskFields(t));
+        const existingIds = new Set(sanitized.map((t) => t.id));
+
+        let seededSet = new Set<string>();
+        try {
+          const rawSeeded = localStorage.getItem(SEEDED_PACK_IDS_STORAGE_KEY);
+          if (rawSeeded) {
+            const parsedSeeded = JSON.parse(rawSeeded);
+            if (Array.isArray(parsedSeeded)) {
+              seededSet = new Set(parsedSeeded.filter((x) => typeof x === 'string'));
+            }
+          }
+        } catch {
+          // ignore
+        }
+
+        const newPackToAppend: VictorTask[] = [];
+        for (const packTask of VICTOR_REPORTES_PACK_TASKS) {
+          if (!existingIds.has(packTask.id) && !seededSet.has(packTask.id)) {
+            newPackToAppend.push(sanitizeTaskFields(packTask));
+          }
+          seededSet.add(packTask.id);
+        }
+
+        const merged = [...sanitized, ...newPackToAppend];
+        try {
+          localStorage.setItem(SEEDED_PACK_IDS_STORAGE_KEY, JSON.stringify([...seededSet]));
+          if (newPackToAppend.length > 0) {
+            localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(merged));
+          }
+        } catch {
+          // ignore
+        }
+
         const initialNormalized = VICTOR_INITIAL_TASKS.map((t) => sanitizeTaskFields(t));
-        const differs = JSON.stringify(sanitized) !== JSON.stringify(initialNormalized);
-        return { tasks: sanitized, differsFromInitial: differs };
+        const differs = JSON.stringify(merged) !== JSON.stringify(initialNormalized);
+        return { tasks: merged, differsFromInitial: differs };
       }
     }
   } catch (e) {
     console.error('Error reading local tasks cache:', e);
+  }
+  try {
+    localStorage.setItem(
+      SEEDED_PACK_IDS_STORAGE_KEY,
+      JSON.stringify(VICTOR_REPORTES_PACK_TASKS.map((t) => t.id))
+    );
+  } catch {
+    // ignore
   }
   return {
     tasks: VICTOR_INITIAL_TASKS.map((t) => sanitizeTaskFields(t)),
@@ -138,6 +181,8 @@ export const CloudSyncProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const taskIdsRef = useRef<string[]>(initialLocal.current.tasks.map((t) => t.id));
   const cloudTasksMapRef = useRef<Map<string, VictorTask>>(new Map());
   const taskUnsubsRef = useRef<Map<string, Unsubscribe>>(new Map());
+  const isInitializingWorkspaceRef = useRef<boolean>(false);
+  const hasAutoSeededCloudPackRef = useRef<boolean>(false);
 
   const isAdminUser = Boolean(
     user && user.emailVerified && user.email?.toLowerCase() === BOOTSTRAP_ADMIN_EMAIL.toLowerCase()
@@ -215,41 +260,47 @@ export const CloudSyncProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Helper: Initialize workspace + owner member when workspace doesn't exist yet
   const initializeWorkspaceAndSeed = useCallback(
     async (currentUser: User, codeToSet: string, seedTasks: VictorTask[], initialMeetingDate: string) => {
-      const wsRef = doc(db, 'workspaces', WORKSPACE_ID);
-      const memberRef = doc(db, 'workspaces', WORKSPACE_ID, 'members', currentUser.uid);
-
-      const initBatch = writeBatch(db);
-      initBatch.set(wsRef, {
-        id: WORKSPACE_ID,
-        name: 'DIVO · Sistema Owl & Estrategia',
-        ownerId: currentUser.uid,
-        teamCode: codeToSet,
-        syncMeetingDate: sanitizeDate(initialMeetingDate, '2026-10-26'),
-        taskIds: [],
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        updatedByUid: currentUser.uid,
-      });
-
-      initBatch.set(memberRef, {
-        uid: currentUser.uid,
-        workspaceId: WORKSPACE_ID,
-        displayName: sanitizeDisplayName(currentUser.displayName),
-        role: 'owner',
-        teamCode: codeToSet,
-        joinedAt: serverTimestamp(),
-      });
-
+      isInitializingWorkspaceRef.current = true;
       try {
-        await initBatch.commit();
-      } catch (err) {
-        handleFirestoreError(err, OperationType.CREATE, `workspaces/${WORKSPACE_ID}`);
-      }
+        const wsRef = doc(db, 'workspaces', WORKSPACE_ID);
+        const memberRef = doc(db, 'workspaces', WORKSPACE_ID, 'members', currentUser.uid);
 
-      await seedTasksIntoCloudWorkspace(currentUser, seedTasks);
-      setHasPendingLocalEdits(false);
-      setMemberRole('owner');
-      setActiveTeamCode(codeToSet);
+        const initBatch = writeBatch(db);
+        initBatch.set(wsRef, {
+          id: WORKSPACE_ID,
+          name: 'DIVO · Sistema Owl & Estrategia',
+          ownerId: currentUser.uid,
+          teamCode: codeToSet,
+          syncMeetingDate: sanitizeDate(initialMeetingDate, '2026-10-26'),
+          taskIds: [],
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          updatedByUid: currentUser.uid,
+        });
+
+        initBatch.set(memberRef, {
+          uid: currentUser.uid,
+          workspaceId: WORKSPACE_ID,
+          displayName: sanitizeDisplayName(currentUser.displayName),
+          role: 'owner',
+          teamCode: codeToSet,
+          joinedAt: serverTimestamp(),
+        });
+
+        try {
+          await initBatch.commit();
+        } catch (err) {
+          handleFirestoreError(err, OperationType.CREATE, `workspaces/${WORKSPACE_ID}`);
+        }
+
+        await seedTasksIntoCloudWorkspace(currentUser, seedTasks);
+        hasAutoSeededCloudPackRef.current = true;
+        setHasPendingLocalEdits(false);
+        setMemberRole('owner');
+        setActiveTeamCode(codeToSet);
+      } finally {
+        isInitializingWorkspaceRef.current = false;
+      }
     },
     [seedTasksIntoCloudWorkspace]
   );
@@ -475,6 +526,57 @@ export const CloudSyncProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         rebuildOrderedTasks();
         setSyncState('synced');
         setLastSavedAt(formatNowTime());
+
+        // Auto-seed the 37-item Reports & Fields Pack if workspace existed prior to this update
+        if (
+          !isInitializingWorkspaceRef.current &&
+          !hasAutoSeededCloudPackRef.current &&
+          incomingIds.length > 0 &&
+          !incomingIds.some((id) => id.startsWith('campo-divo-') || id.startsWith('rep-divo-'))
+        ) {
+          hasAutoSeededCloudPackRef.current = true;
+          void (async () => {
+            const packClean = VICTOR_REPORTES_PACK_TASKS.map((t) => sanitizeTaskFields(t));
+            const nextIds = [...incomingIds];
+            for (let i = 0; i < packClean.length; i += 4) {
+              const chunk = packClean.slice(i, i + 4);
+              const batch = writeBatch(db);
+              for (const t of chunk) {
+                if (nextIds.length >= MAX_TASK_IDS_COUNT) break;
+                if (nextIds.includes(t.id)) continue;
+                nextIds.push(t.id);
+                const tRef = doc(db, 'workspaces', WORKSPACE_ID, 'tasks', t.id);
+                batch.set(tRef, {
+                  id: t.id,
+                  workspaceId: WORKSPACE_ID,
+                  title: t.title,
+                  requestedBy: t.requestedBy,
+                  module: t.module,
+                  priority: t.priority,
+                  deadline: t.deadline,
+                  status: t.status,
+                  observations: t.observations,
+                  specs: t.specs || '',
+                  createdDateLabel: sanitizeDate(t.createdAt),
+                  createdByUid: user.uid,
+                  updatedByUid: user.uid,
+                  createdAt: serverTimestamp(),
+                  updatedAt: serverTimestamp(),
+                });
+              }
+              batch.update(wsRef, {
+                taskIds: [...nextIds],
+                updatedAt: serverTimestamp(),
+                updatedByUid: user.uid,
+              });
+              try {
+                await batch.commit();
+              } catch (err) {
+                handleFirestoreError(err, OperationType.WRITE, `workspaces/${WORKSPACE_ID}/tasks`);
+              }
+            }
+          })();
+        }
       },
       (err) => {
         handleFirestoreError(err, OperationType.GET, wsPath);

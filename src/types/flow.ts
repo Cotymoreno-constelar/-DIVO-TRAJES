@@ -76,7 +76,7 @@ export interface CustomerJourney {
 
 export type TaskStatus = 'sin_novedades' | 'en_curso' | 'terminada' | 'probada' | 'bloqueada' | 'finalizado';
 export type TaskRequester = 'Coty' | 'Yasmín' | 'Sucursales' | 'Administración';
-export type TaskPriority = 'urgente' | 'alta' | 'media';
+export type TaskPriority = 'urgente' | 'alta' | 'media' | 'baja';
 
 export interface VictorTask {
   id: string;
