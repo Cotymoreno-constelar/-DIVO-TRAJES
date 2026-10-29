@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { VictorOwlBoard } from './VictorOwlBoard';
+import { useCloudSync } from '../context/CloudSyncContext';
 import { 
   Terminal, 
   LayoutList, 
@@ -26,6 +27,7 @@ export const VictorStandaloneApp: React.FC<VictorStandaloneAppProps> = ({
   const [activeSection, setActiveSection] = useState<'board' | 'backlog' | 'print'>('board');
   const [copiedLink, setCopiedLink] = useState<boolean>(false);
   const [simulateVictorView, setSimulateVictorView] = useState<boolean>(false);
+  const { activeTeamCode } = useCloudSync();
 
   const hideAdminControls = isDirectIsolatedUrl || simulateVictorView;
 
@@ -40,6 +42,7 @@ export const VictorStandaloneApp: React.FC<VictorStandaloneAppProps> = ({
   const handleCopyVictorLink = async () => {
     const url = new URL(window.location.href);
     url.searchParams.set('app', 'victor');
+    url.searchParams.set('key', activeTeamCode || 'DIVO-OWL');
     url.hash = '';
     try {
       await navigator.clipboard.writeText(url.toString());

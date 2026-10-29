@@ -1,9 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
-  VICTOR_INITIAL_TASKS, 
   DEV_SUGGESTIONS 
 } from '../data/constelarData';
 import { VictorTask, TaskStatus, TaskRequester, TaskPriority, DevSuggestion } from '../types/flow';
+import { useCloudSync } from '../context/CloudSyncContext';
+import { CloudSyncBanner } from './CloudSyncBanner';
+import {
+  MAX_TITLE_LENGTH,
+  MAX_MODULE_LENGTH,
+  MAX_OBSERVATIONS_LENGTH,
+  MAX_SPECS_LENGTH,
+} from '../firebase';
 import { 
   Code2, 
   Plus, 
@@ -15,10 +22,9 @@ import {
   Lightbulb, 
   X,
   Search,
-  Printer
+  Printer,
+  Lock
 } from 'lucide-react';
-
-const STORAGE_KEY = 'divo_victor_tasks_v3';
 
 interface VictorOwlBoardProps {
   activeSection?: 'board' | 'backlog' | 'print';
@@ -29,27 +35,17 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
   activeSection = 'board',
   onNavigateSection
 }) => {
-  // Load tasks from localStorage if present, or fallback to initial tasks
-  const [tasks, setTasks] = useState<VictorTask[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        return JSON.parse(saved);
-      }
-    } catch (e) {
-      console.error('Error loading tasks from localStorage', e);
-    }
-    return VICTOR_INITIAL_TASKS;
-  });
-
-  // Save to localStorage when tasks change
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
-    } catch (e) {
-      console.error('Error saving tasks to localStorage', e);
-    }
-  }, [tasks]);
+  const {
+    tasks,
+    createTask,
+    updateTaskProgress,
+    updateFullTask,
+    deleteTask,
+    canDeleteTasks,
+    canEditAllFieldsOfTask,
+    canModifyFinalizedTask,
+    memberRole,
+  } = useCloudSync();
 
   // Filters & State
   const [filterRequester, setFilterRequester] = useState<string>('all');
@@ -116,42 +112,42 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
 
   // Handle changing status directly in board
   const handleStatusChange = (taskId: string, newStat: TaskStatus) => {
-    setTasks(prev => prev.map(t => {
-      if (t.id === taskId) {
-        return { ...t, status: newStat };
-      }
-      return t;
-    }));
-    showToast('Estado de solicitud actualizado');
+    const target = tasks.find((t) => t.id === taskId);
+    if (target?.status === 'finalizado' && !canModifyFinalizedTask) {
+      showToast('Las solicitudes Finalizadas solo pueden reabrirse por Dirección (Coty).');
+      return;
+    }
+    void updateTaskProgress(taskId, { status: newStat });
+    showToast(memberRole ? 'Estado guardado en la nube' : 'Estado guardado en este navegador');
   };
 
   // Handle changing deadline directly (Modifiable Date!)
   const handleDeadlineChange = (taskId: string, newDate: string) => {
     if (!newDate) return;
-    setTasks(prev => prev.map(t => {
-      if (t.id === taskId) {
-        return { ...t, deadline: newDate };
-      }
-      return t;
-    }));
-    showToast(`Fecha límite modificada: ${newDate}`);
+    const target = tasks.find((t) => t.id === taskId);
+    if (target?.status === 'finalizado' && !canModifyFinalizedTask) {
+      showToast('Las solicitudes Finalizadas están validadas y bloqueadas.');
+      return;
+    }
+    void updateTaskProgress(taskId, { deadline: newDate });
+    showToast(
+      memberRole
+        ? `Fecha límite guardada en la nube: ${newDate}`
+        : `Fecha límite modificada: ${newDate}`
+    );
   };
 
   // Handle save inline observation
   const handleSaveObservation = (taskId: string) => {
-    setTasks(prev => prev.map(t => {
-      if (t.id === taskId) {
-        return { ...t, observations: tempObsText };
-      }
-      return t;
-    }));
+    const trimmed = tempObsText.trim() || 'Sin observaciones registradas todavía.';
+    void updateTaskProgress(taskId, { observations: trimmed });
     setEditingObsTaskId(null);
-    showToast('Observación guardada');
+    showToast(memberRole ? 'Observación guardada en la nube' : 'Observación guardada');
   };
 
   // Handle confirmed delete task
   const executeDeleteTask = (taskId: string) => {
-    setTasks(prev => prev.filter(t => t.id !== taskId));
+    void deleteTask(taskId);
     setConfirmDeleteId(null);
     showToast('Solicitud eliminada del tablero');
   };
@@ -163,22 +159,26 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
 
     const newTask: VictorTask = {
       id: `task-${Date.now()}`,
-      title: newTitle.trim(),
+      title: newTitle.trim().slice(0, MAX_TITLE_LENGTH),
       requestedBy: newRequestedBy,
-      module: newModule.trim() || 'Owl CRM',
+      module: (newModule.trim() || 'Owl CRM').slice(0, MAX_MODULE_LENGTH),
       priority: newPriority,
       deadline: newDeadline || '2026-11-20',
       status: newStatus,
-      observations: newObservations.trim() || 'Sin observaciones registradas todavía.',
-      specs: newSpecs.trim(),
+      observations: (newObservations.trim() || 'Sin observaciones registradas todavía.').slice(0, MAX_OBSERVATIONS_LENGTH),
+      specs: newSpecs.trim().slice(0, MAX_SPECS_LENGTH),
       createdAt: new Date().toISOString().split('T')[0]
     };
 
-    setTasks(prev => [newTask, ...prev]);
+    void createTask(newTask);
     setIsModalOpen(false);
     resetForm();
     if (onNavigateSection) onNavigateSection('board');
-    showToast(`Solicitud creada con fecha límite: ${newTask.deadline}`);
+    showToast(
+      memberRole
+        ? `Solicitud creada y guardada en la nube (${newTask.deadline})`
+        : `Solicitud creada con fecha límite: ${newTask.deadline}`
+    );
   };
 
   // Update existing task
@@ -186,8 +186,12 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
     e.preventDefault();
     if (!editingTask) return;
 
-    setTasks(prev => prev.map(t => t.id === editingTask.id ? editingTask : t));
-    showToast(`Solicitud "${editingTask.title}" actualizada`);
+    void updateFullTask(editingTask);
+    showToast(
+      memberRole
+        ? `Solicitud "${editingTask.title}" guardada en la nube`
+        : `Solicitud "${editingTask.title}" actualizada`
+    );
     setEditingTask(null);
   };
 
@@ -212,18 +216,18 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
 
     const newTask: VictorTask = {
       id: `sug-task-${Date.now()}`,
-      title: sug.title,
+      title: sug.title.slice(0, MAX_TITLE_LENGTH),
       requestedBy: requester,
-      module: sug.defaultModule,
+      module: sug.defaultModule.slice(0, MAX_MODULE_LENGTH),
       priority: 'alta',
       deadline: sug.suggestedDeadline,
       status: 'sin_novedades',
-      observations: `Propuesta estratégica: ${sug.description} · Impacto previsto: ${sug.impact}`,
-      specs: sug.description,
+      observations: `Propuesta estratégica: ${sug.description} · Impacto previsto: ${sug.impact}`.slice(0, MAX_OBSERVATIONS_LENGTH),
+      specs: sug.description.slice(0, MAX_SPECS_LENGTH),
       createdAt: new Date().toISOString().split('T')[0]
     };
 
-    setTasks(prev => [newTask, ...prev]);
+    void createTask(newTask);
     showToast(`Propuesta enviada al Tablero Activo de Víctor (${sug.suggestedDeadline})`);
     if (onNavigateSection) {
       setTimeout(() => onNavigateSection('board'), 600);
@@ -262,6 +266,9 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
           <span>{toastMessage}</span>
         </div>
       )}
+
+      {/* Real-time Cloud Sync & Backup Bar */}
+      <CloudSyncBanner onNotify={showToast} />
 
       {/* =========================================================
           VISTA 1: TABLERO DE SOLICITUDES ACTIVAS (TABLA / KANBAN)
@@ -520,8 +527,9 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                                 <input
                                   type="date"
                                   value={task.deadline}
+                                  disabled={task.status === 'finalizado' && !canModifyFinalizedTask}
                                   onChange={(e) => handleDeadlineChange(task.id, e.target.value)}
-                                  className="bg-transparent text-neutral-200 font-mono text-xs focus:outline-none cursor-pointer w-28"
+                                  className="bg-transparent text-neutral-200 font-mono text-xs focus:outline-none cursor-pointer w-28 disabled:opacity-60 disabled:cursor-not-allowed"
                                   title="Modificar fecha límite"
                                 />
                               </div>
@@ -532,8 +540,9 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                           <td className="py-3.5 px-3 whitespace-nowrap">
                             <select
                               value={task.status}
+                              disabled={task.status === 'finalizado' && !canModifyFinalizedTask}
                               onChange={(e) => handleStatusChange(task.id, e.target.value as TaskStatus)}
-                              className={`border rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:border-cyan-400 cursor-pointer ${
+                              className={`border rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:border-cyan-400 cursor-pointer disabled:cursor-not-allowed ${
                                 task.status === 'finalizado'
                                   ? 'bg-emerald-950/40 text-emerald-300 border-emerald-500/40 font-semibold'
                                   : task.status === 'en_curso'
@@ -556,6 +565,7 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                               <div className="flex items-center gap-1.5">
                                 <input
                                   type="text"
+                                  maxLength={MAX_OBSERVATIONS_LENGTH}
                                   value={tempObsText}
                                   onChange={(e) => setTempObsText(e.target.value)}
                                   className="w-full bg-neutral-950 border border-cyan-500/60 rounded px-2 py-1 text-xs text-neutral-100 focus:outline-none"
@@ -579,6 +589,10 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                             ) : (
                               <div 
                                 onClick={() => {
+                                  if (task.status === 'finalizado' && !canModifyFinalizedTask) {
+                                    showToast('Solicitud Finalizada y validada.');
+                                    return;
+                                  }
                                   setEditingObsTaskId(task.id);
                                   setTempObsText(task.observations);
                                 }}
@@ -610,20 +624,31 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                               </div>
                             ) : (
                               <div className="flex items-center justify-end gap-1">
-                                <button
-                                  onClick={() => setEditingTask(task)}
-                                  className="p-1.5 rounded-lg text-neutral-400 hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors cursor-pointer"
-                                  title="Editar toda la tarea y fechas"
-                                >
-                                  <Edit3 className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={() => setConfirmDeleteId(task.id)}
-                                  className="p-1.5 rounded-lg text-neutral-500 hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
-                                  title="Eliminar tarea"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
+                                {task.status === 'finalizado' && !canModifyFinalizedTask ? (
+                                  <span
+                                    className="p-1.5 rounded-lg text-emerald-500/70 inline-flex items-center"
+                                    title="Validado como LISTO · Solo Dirección puede reabrir"
+                                  >
+                                    <Lock className="w-3.5 h-3.5" />
+                                  </span>
+                                ) : (
+                                  <button
+                                    onClick={() => setEditingTask(task)}
+                                    className="p-1.5 rounded-lg text-neutral-400 hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors cursor-pointer"
+                                    title="Editar toda la tarea y fechas"
+                                  >
+                                    <Edit3 className="w-4 h-4" />
+                                  </button>
+                                )}
+                                {canDeleteTasks && (
+                                  <button
+                                    onClick={() => setConfirmDeleteId(task.id)}
+                                    className="p-1.5 rounded-lg text-neutral-500 hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
+                                    title="Eliminar tarea"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                )}
                               </div>
                             )}
                           </td>
@@ -654,6 +679,7 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                     <KanbanCard 
                       key={t.id} 
                       task={t} 
+                      isLocked={!canModifyFinalizedTask}
                       onStatusChange={handleStatusChange} 
                       onDeadlineChange={handleDeadlineChange}
                       onEdit={() => setEditingTask(t)}
@@ -914,6 +940,7 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                 <input
                   type="text"
                   required
+                  maxLength={MAX_TITLE_LENGTH}
                   placeholder="Ej: Reporte de Rentabilidad por Sucursal o Ficha de Medidas"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
@@ -944,6 +971,7 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                   </label>
                   <input
                     type="text"
+                    maxLength={MAX_MODULE_LENGTH}
                     placeholder="Ej: Owl Reportes, Kommo Sync, Probadores"
                     value={newModule}
                     onChange={(e) => setNewModule(e.target.value)}
@@ -1005,6 +1033,7 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                 </label>
                 <textarea
                   rows={2}
+                  maxLength={MAX_OBSERVATIONS_LENGTH}
                   placeholder="Detalles sobre qué espera Coty o Yasmín de este desarrollo..."
                   value={newObservations}
                   onChange={(e) => setNewObservations(e.target.value)}
@@ -1018,6 +1047,7 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                 </label>
                 <input
                   type="text"
+                  maxLength={MAX_SPECS_LENGTH}
                   placeholder="Ej: Endpoint REST, Webhook en Kommo, filtro por ID de sucursal"
                   value={newSpecs}
                   onChange={(e) => setNewSpecs(e.target.value)}
@@ -1084,9 +1114,11 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                 <input
                   type="text"
                   required
+                  maxLength={MAX_TITLE_LENGTH}
+                  disabled={!canEditAllFieldsOfTask(editingTask)}
                   value={editingTask.title}
                   onChange={(e) => setEditingTask({ ...editingTask, title: e.target.value })}
-                  className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-xs text-neutral-100 focus:outline-none focus:border-cyan-400"
+                  className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-xs text-neutral-100 focus:outline-none focus:border-cyan-400 disabled:opacity-60"
                 />
               </div>
 
@@ -1096,9 +1128,10 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                     Solicitante
                   </label>
                   <select
+                    disabled={!canEditAllFieldsOfTask(editingTask)}
                     value={editingTask.requestedBy}
                     onChange={(e) => setEditingTask({ ...editingTask, requestedBy: e.target.value as TaskRequester })}
-                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-neutral-200 focus:outline-none"
+                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-neutral-200 focus:outline-none disabled:opacity-60"
                   >
                     <option value="Coty">👑 Coty (Reportes & Dirección)</option>
                     <option value="Yasmín">👗 Yasmín (Operatividad & Clientes)</option>
@@ -1113,9 +1146,11 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                   </label>
                   <input
                     type="text"
+                    maxLength={MAX_MODULE_LENGTH}
+                    disabled={!canEditAllFieldsOfTask(editingTask)}
                     value={editingTask.module}
                     onChange={(e) => setEditingTask({ ...editingTask, module: e.target.value })}
-                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-neutral-100 focus:outline-none"
+                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-neutral-100 focus:outline-none disabled:opacity-60"
                   />
                 </div>
               </div>
@@ -1126,9 +1161,10 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                     Prioridad
                   </label>
                   <select
+                    disabled={!canEditAllFieldsOfTask(editingTask)}
                     value={editingTask.priority}
                     onChange={(e) => setEditingTask({ ...editingTask, priority: e.target.value as TaskPriority })}
-                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-neutral-200 focus:outline-none"
+                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-neutral-200 focus:outline-none disabled:opacity-60"
                   >
                     <option value="urgente">🔴 Urgente</option>
                     <option value="alta">🟡 Alta</option>
@@ -1174,6 +1210,7 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                 </label>
                 <textarea
                   rows={2}
+                  maxLength={MAX_OBSERVATIONS_LENGTH}
                   value={editingTask.observations}
                   onChange={(e) => setEditingTask({ ...editingTask, observations: e.target.value })}
                   className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-neutral-100 focus:outline-none"
@@ -1208,6 +1245,7 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
 
 interface KanbanCardProps {
   task: VictorTask;
+  isLocked?: boolean;
   onStatusChange: (taskId: string, newStatus: TaskStatus) => void;
   onDeadlineChange: (taskId: string, newDate: string) => void;
   onEdit: () => void;
@@ -1215,6 +1253,7 @@ interface KanbanCardProps {
 
 const KanbanCard: React.FC<KanbanCardProps> = ({ 
   task, 
+  isLocked = false,
   onStatusChange, 
   onDeadlineChange,
   onEdit
@@ -1239,13 +1278,15 @@ const KanbanCard: React.FC<KanbanCardProps> = ({
           <span className="text-[10px] font-mono text-cyan-400">
             {task.module}
           </span>
-          <button
-            onClick={onEdit}
-            className="text-neutral-500 hover:text-cyan-300 p-0.5 transition-colors cursor-pointer"
-            title="Editar tarea"
-          >
-            <Edit3 className="w-3 h-3" />
-          </button>
+          {!isLocked && (
+            <button
+              onClick={onEdit}
+              className="text-neutral-500 hover:text-cyan-300 p-0.5 transition-colors cursor-pointer"
+              title="Editar tarea"
+            >
+              <Edit3 className="w-3 h-3" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -1266,17 +1307,19 @@ const KanbanCard: React.FC<KanbanCardProps> = ({
           <Calendar className="w-3 h-3 text-cyan-400 shrink-0" />
           <input
             type="date"
+            disabled={isLocked}
             value={task.deadline}
             onChange={(e) => onDeadlineChange(task.id, e.target.value)}
-            className="bg-transparent text-[10px] text-neutral-300 focus:outline-none cursor-pointer w-24"
+            className="bg-transparent text-[10px] text-neutral-300 focus:outline-none cursor-pointer w-24 disabled:opacity-60 disabled:cursor-not-allowed"
             title="Modificar fecha límite en Kanban"
           />
         </div>
 
         <select
+          disabled={isLocked}
           value={task.status}
           onChange={(e) => onStatusChange(task.id, e.target.value as TaskStatus)}
-          className={`border rounded px-1.5 py-0.5 text-[10px] focus:outline-none cursor-pointer ${
+          className={`border rounded px-1.5 py-0.5 text-[10px] focus:outline-none cursor-pointer disabled:cursor-not-allowed ${
             task.status === 'finalizado'
               ? 'bg-emerald-950/40 text-emerald-300 border-emerald-500/40 font-semibold'
               : 'bg-neutral-900 border-neutral-800 text-neutral-300'

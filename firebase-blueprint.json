@@ -1,0 +1,283 @@
+{
+  "entities": {
+    "AdminUser": {
+      "title": "AdminUser",
+      "description": "Trusted administrator record for elevated governance overrides.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID of the administrator.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when admin record was provisioned."
+        }
+      },
+      "required": ["uid", "createdAt"]
+    },
+    "Workspace": {
+      "title": "Workspace",
+      "description": "Master workspace document for DIVO Owl System & Strategy real-time synchronization.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Workspace identifier (divo-owl).",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable workspace title.",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "UID of the workspace creator/owner.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "teamCode": {
+          "type": "string",
+          "description": "Shared access code required for collaborators to join this workspace.",
+          "minLength": 4,
+          "maxLength": 32,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "syncMeetingDate": {
+          "type": "string",
+          "description": "ISO date YYYY-MM-DD for the weekly team synchronization meeting.",
+          "minLength": 10,
+          "maxLength": 10,
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "taskIds": {
+          "type": "array",
+          "description": "Bounded ordered list (max 100) of active task IDs in the tasks subcollection."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Immutable server creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server last-updated timestamp."
+        },
+        "updatedByUid": {
+          "type": "string",
+          "description": "UID of the authenticated member who performed the latest update.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "ownerId",
+        "teamCode",
+        "syncMeetingDate",
+        "taskIds",
+        "createdAt",
+        "updatedAt",
+        "updatedByUid"
+      ]
+    },
+    "WorkspaceMember": {
+      "title": "WorkspaceMember",
+      "description": "Relational membership document authorizing access to a Workspace without storing PII.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID of the member.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "workspaceId": {
+          "type": "string",
+          "description": "Parent workspace ID.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Non-PII display alias or first name of the team member.",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "role": {
+          "type": "string",
+          "description": "Tiered permission role within the workspace.",
+          "enum": ["owner", "collaborator"],
+          "minLength": 5,
+          "maxLength": 12
+        },
+        "teamCode": {
+          "type": "string",
+          "description": "Workspace invite code verified against the parent workspace on join.",
+          "minLength": 4,
+          "maxLength": 32,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "joinedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Immutable server timestamp when membership was granted."
+        }
+      },
+      "required": ["uid", "workspaceId", "displayName", "role", "teamCode", "joinedAt"]
+    },
+    "OwlTask": {
+      "title": "OwlTask",
+      "description": "Development requirement or sprint task for the DIVO Owl System board.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique task identifier.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "workspaceId": {
+          "type": "string",
+          "description": "Parent workspace identifier.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "title": {
+          "type": "string",
+          "description": "Summary description of the Owl System request.",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        "requestedBy": {
+          "type": "string",
+          "description": "Area or leader requesting the task.",
+          "enum": ["Coty", "Yasmín", "Sucursales", "Administración"],
+          "minLength": 4,
+          "maxLength": 20
+        },
+        "module": {
+          "type": "string",
+          "description": "Owl System module impacted by the task.",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "priority": {
+          "type": "string",
+          "description": "Urgency level of the task.",
+          "enum": ["urgente", "alta", "media"],
+          "minLength": 4,
+          "maxLength": 10
+        },
+        "deadline": {
+          "type": "string",
+          "description": "Target delivery date in YYYY-MM-DD format.",
+          "minLength": 10,
+          "maxLength": 10,
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "status": {
+          "type": "string",
+          "description": "Current workflow state of the task.",
+          "enum": ["sin_novedades", "en_curso", "terminada", "probada", "bloqueada", "finalizado"],
+          "minLength": 7,
+          "maxLength": 15
+        },
+        "observations": {
+          "type": "string",
+          "description": "Technical progress notes and observations.",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "specs": {
+          "type": "string",
+          "description": "Detailed functional specifications (empty string when omitted).",
+          "minLength": 0,
+          "maxLength": 2000
+        },
+        "createdDateLabel": {
+          "type": "string",
+          "description": "Immutable YYYY-MM-DD creation date label.",
+          "minLength": 10,
+          "maxLength": 10,
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "createdByUid": {
+          "type": "string",
+          "description": "Immutable UID of the user who created the task.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "updatedByUid": {
+          "type": "string",
+          "description": "UID of the user who performed the latest update.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Immutable server timestamp of creation."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of latest update."
+        }
+      },
+      "required": [
+        "id",
+        "workspaceId",
+        "title",
+        "requestedBy",
+        "module",
+        "priority",
+        "deadline",
+        "status",
+        "observations",
+        "specs",
+        "createdDateLabel",
+        "createdByUid",
+        "updatedByUid",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/admins/{adminId}": {
+      "schema": { "$ref": "#/entities/AdminUser" },
+      "description": "Trusted admin records controllable only by the bootstrapped admin."
+    },
+    "/workspaces/{workspaceId}": {
+      "schema": { "$ref": "#/entities/Workspace" },
+      "description": "Singleton workspace configuration and bounded task ID index for DIVO."
+    },
+    "/workspaces/{workspaceId}/members/{memberId}": {
+      "schema": { "$ref": "#/entities/WorkspaceMember" },
+      "description": "Subcollection of authorized DIVO workspace members."
+    },
+    "/workspaces/{workspaceId}/tasks/{taskId}": {
+      "schema": { "$ref": "#/entities/OwlTask" },
+      "description": "Subcollection of Owl System requirements and sprint tasks."
+    }
+  }
+}

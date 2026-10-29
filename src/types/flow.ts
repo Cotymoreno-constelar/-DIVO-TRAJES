@@ -89,6 +89,7 @@ export interface VictorTask {
   observations: string;
   createdAt: string;
   specs?: string;
+  createdByUid?: string;
 }
 
 export interface DevSuggestion {

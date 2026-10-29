@@ -1,0 +1,375 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Default-Deny Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // =========================================================================
+    // GLOBAL PRIMITIVES & IDENTITY HELPERS
+    // =========================================================================
+    function isValidId(id) {
+      return id is string &&
+        id.size() >= 1 &&
+        id.size() <= 128 &&
+        id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isBootstrapAdmin() {
+      return isVerifiedUser() &&
+        request.auth.token.email == 'jimenacmoreno@gmail.com';
+    }
+
+    function isAdmin() {
+      return isVerifiedUser() && (
+        request.auth.token.email == 'jimenacmoreno@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // =========================================================================
+    // RELATIONAL HELPERS (MASTER GATE)
+    // =========================================================================
+    function workspaceDocPath(workspaceId) {
+      return /databases/$(database)/documents/workspaces/$(workspaceId);
+    }
+
+    function memberDocPath(workspaceId, uid) {
+      return /databases/$(database)/documents/workspaces/$(workspaceId)/members/$(uid);
+    }
+
+    function isWorkspaceMember(workspaceId) {
+      return exists(workspaceDocPath(workspaceId)) &&
+        exists(memberDocPath(workspaceId, request.auth.uid));
+    }
+
+    function isWorkspaceOwner(workspaceId) {
+      return exists(workspaceDocPath(workspaceId)) &&
+        exists(memberDocPath(workspaceId, request.auth.uid)) &&
+        get(workspaceDocPath(workspaceId)).data.ownerId == request.auth.uid;
+    }
+
+    // =========================================================================
+    // VALIDATION BLUEPRINTS (SYNCHRONIZED WITH firebase-blueprint.json)
+    // =========================================================================
+    function isValidAdminUser(data) {
+      return data.keys().hasAll(['uid', 'createdAt']) &&
+        data.keys().hasOnly(['uid', 'createdAt']) &&
+        isValidId(data.uid) &&
+        data.uid == request.auth.uid &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidTaskIdsList(listVal) {
+      return listVal is list &&
+        listVal.size() <= 100 &&
+        (
+          listVal.size() == 0 ||
+          (
+            listVal[0] is string &&
+            listVal[0].size() >= 1 &&
+            listVal[0].size() <= 128 &&
+            listVal[0].matches('^[a-zA-Z0-9_\\-]+$')
+          )
+        );
+    }
+
+    function isValidWorkspace(data) {
+      return data.keys().hasAll([
+          'id', 'name', 'ownerId', 'teamCode', 'syncMeetingDate',
+          'taskIds', 'createdAt', 'updatedAt', 'updatedByUid'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'name', 'ownerId', 'teamCode', 'syncMeetingDate',
+          'taskIds', 'createdAt', 'updatedAt', 'updatedByUid'
+        ]) &&
+        isValidId(data.id) &&
+        data.name is string && data.name.size() >= 1 && data.name.size() <= 120 &&
+        isValidId(data.ownerId) &&
+        data.teamCode is string && data.teamCode.size() >= 4 && data.teamCode.size() <= 32 &&
+        data.teamCode.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.syncMeetingDate is string && data.syncMeetingDate.size() == 10 &&
+        data.syncMeetingDate.matches('^\\d{4}-\\d{2}-\\d{2}$') &&
+        isValidTaskIdsList(data.taskIds) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp &&
+        isValidId(data.updatedByUid) &&
+        data.updatedByUid == request.auth.uid;
+    }
+
+    function isValidWorkspaceMember(data) {
+      return data.keys().hasAll([
+          'uid', 'workspaceId', 'displayName', 'role', 'teamCode', 'joinedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'uid', 'workspaceId', 'displayName', 'role', 'teamCode', 'joinedAt'
+        ]) &&
+        isValidId(data.uid) &&
+        data.uid == request.auth.uid &&
+        isValidId(data.workspaceId) &&
+        data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 60 &&
+        data.role is string && data.role.size() >= 5 && data.role.size() <= 12 &&
+        (data.role in ['owner', 'collaborator']) &&
+        data.teamCode is string && data.teamCode.size() >= 4 && data.teamCode.size() <= 32 &&
+        data.teamCode.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.joinedAt is timestamp;
+    }
+
+    function isValidOwlTask(data) {
+      return data.keys().hasAll([
+          'id', 'workspaceId', 'title', 'requestedBy', 'module', 'priority',
+          'deadline', 'status', 'observations', 'specs', 'createdDateLabel',
+          'createdByUid', 'updatedByUid', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'workspaceId', 'title', 'requestedBy', 'module', 'priority',
+          'deadline', 'status', 'observations', 'specs', 'createdDateLabel',
+          'createdByUid', 'updatedByUid', 'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.id) &&
+        isValidId(data.workspaceId) &&
+        data.title is string && data.title.size() >= 1 && data.title.size() <= 300 &&
+        data.requestedBy is string && data.requestedBy.size() >= 4 && data.requestedBy.size() <= 20 &&
+        (data.requestedBy in ['Coty', 'Yasmín', 'Sucursales', 'Administración']) &&
+        data.module is string && data.module.size() >= 1 && data.module.size() <= 100 &&
+        data.priority is string && data.priority.size() >= 4 && data.priority.size() <= 10 &&
+        (data.priority in ['urgente', 'alta', 'media']) &&
+        data.deadline is string && data.deadline.size() == 10 &&
+        data.deadline.matches('^\\d{4}-\\d{2}-\\d{2}$') &&
+        data.status is string && data.status.size() >= 7 && data.status.size() <= 15 &&
+        (data.status in ['sin_novedades', 'en_curso', 'terminada', 'probada', 'bloqueada', 'finalizado']) &&
+        data.observations is string && data.observations.size() >= 1 && data.observations.size() <= 2000 &&
+        data.specs is string && data.specs.size() >= 0 && data.specs.size() <= 2000 &&
+        data.createdDateLabel is string && data.createdDateLabel.size() == 10 &&
+        data.createdDateLabel.matches('^\\d{4}-\\d{2}-\\d{2}$') &&
+        isValidId(data.createdByUid) &&
+        isValidId(data.updatedByUid) &&
+        data.updatedByUid == request.auth.uid &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    // =========================================================================
+    // COLLECTION: /admins/{adminId}
+    // =========================================================================
+    match /admins/{adminId} {
+      allow get: if isVerifiedUser() &&
+        isValidId(adminId) &&
+        (request.auth.uid == adminId || isAdmin());
+
+      allow list: if false;
+
+      allow create: if isBootstrapAdmin() &&
+        isValidId(adminId) &&
+        adminId == request.auth.uid &&
+        isValidAdminUser(incoming()) &&
+        incoming().createdAt == request.time;
+
+      allow update: if false;
+
+      allow delete: if isBootstrapAdmin() && isValidId(adminId);
+    }
+
+    // =========================================================================
+    // COLLECTION: /workspaces/{workspaceId}
+    // =========================================================================
+    match /workspaces/{workspaceId} {
+      allow get: if isVerifiedUser() &&
+        isValidId(workspaceId) &&
+        (isWorkspaceMember(workspaceId) || isAdmin());
+
+      allow list: if false;
+
+      allow create: if isVerifiedUser() &&
+        isValidId(workspaceId) &&
+        workspaceId == 'divo-owl' &&
+        isValidWorkspace(incoming()) &&
+        incoming().id == workspaceId &&
+        incoming().ownerId == request.auth.uid &&
+        incoming().taskIds.size() == 0 &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        !exists(workspaceDocPath(workspaceId)) &&
+        existsAfter(memberDocPath(workspaceId, request.auth.uid));
+
+      allow update: if isVerifiedUser() &&
+        isValidId(workspaceId) &&
+        isValidWorkspace(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          isAdmin() ||
+          // Action 1: Update weekly sync meeting date
+          (
+            isWorkspaceMember(workspaceId) &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'syncMeetingDate', 'updatedAt', 'updatedByUid'
+            ])
+          ) ||
+          // Action 2: Sync bounded taskIds index
+          (
+            isWorkspaceMember(workspaceId) &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'taskIds', 'updatedAt', 'updatedByUid'
+            ])
+          ) ||
+          // Action 3: Owner updates workspace metadata
+          (
+            isWorkspaceOwner(workspaceId) &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'name', 'teamCode', 'updatedAt', 'updatedByUid'
+            ])
+          )
+        );
+
+      allow delete: if false;
+
+      // =======================================================================
+      // SUBCOLLECTION: /workspaces/{workspaceId}/members/{memberId}
+      // =======================================================================
+      match /members/{memberId} {
+        allow get: if isVerifiedUser() &&
+          isValidId(workspaceId) &&
+          isValidId(memberId) &&
+          (request.auth.uid == memberId || isWorkspaceMember(workspaceId) || isAdmin());
+
+        allow list: if false;
+
+        allow create: if isVerifiedUser() &&
+          isValidId(workspaceId) &&
+          isValidId(memberId) &&
+          memberId == request.auth.uid &&
+          isValidWorkspaceMember(incoming()) &&
+          incoming().workspaceId == workspaceId &&
+          incoming().joinedAt == request.time &&
+          (
+            // Action A: Atomic initial workspace owner creation
+            (
+              !exists(workspaceDocPath(workspaceId)) &&
+              existsAfter(workspaceDocPath(workspaceId)) &&
+              getAfter(workspaceDocPath(workspaceId)).data.ownerId == request.auth.uid &&
+              incoming().role == 'owner' &&
+              incoming().teamCode == getAfter(workspaceDocPath(workspaceId)).data.teamCode
+            ) ||
+            // Action B: Bootstrapped admin joining workspace
+            (
+              isAdmin() &&
+              exists(workspaceDocPath(workspaceId)) &&
+              incoming().role == 'owner' &&
+              incoming().teamCode == get(workspaceDocPath(workspaceId)).data.teamCode
+            ) ||
+            // Action C: Collaborator joining existing workspace with valid teamCode
+            (
+              exists(workspaceDocPath(workspaceId)) &&
+              incoming().role == 'collaborator' &&
+              incoming().teamCode == get(workspaceDocPath(workspaceId)).data.teamCode
+            )
+          );
+
+        allow update: if isVerifiedUser() &&
+          isValidId(workspaceId) &&
+          isValidId(memberId) &&
+          isValidWorkspaceMember(incoming()) &&
+          incoming().uid == existing().uid &&
+          incoming().workspaceId == existing().workspaceId &&
+          incoming().role == existing().role &&
+          incoming().teamCode == existing().teamCode &&
+          incoming().joinedAt == existing().joinedAt &&
+          (
+            isAdmin() ||
+            (
+              request.auth.uid == memberId &&
+              isWorkspaceMember(workspaceId) &&
+              incoming().diff(existing()).affectedKeys().hasOnly(['displayName'])
+            )
+          );
+
+        allow delete: if isVerifiedUser() &&
+          isValidId(workspaceId) &&
+          isValidId(memberId) &&
+          (isAdmin() || isWorkspaceOwner(workspaceId) || request.auth.uid == memberId);
+      }
+
+      // =======================================================================
+      // SUBCOLLECTION: /workspaces/{workspaceId}/tasks/{taskId}
+      // =======================================================================
+      match /tasks/{taskId} {
+        allow get: if isVerifiedUser() &&
+          isValidId(workspaceId) &&
+          isValidId(taskId) &&
+          (isWorkspaceMember(workspaceId) || isAdmin());
+
+        allow list: if false;
+
+        allow create: if isVerifiedUser() &&
+          isValidId(workspaceId) &&
+          isValidId(taskId) &&
+          isValidOwlTask(incoming()) &&
+          incoming().id == taskId &&
+          incoming().workspaceId == workspaceId &&
+          incoming().createdByUid == request.auth.uid &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          (isWorkspaceMember(workspaceId) || isAdmin()) &&
+          (taskId in getAfter(workspaceDocPath(workspaceId)).data.taskIds);
+
+        allow update: if isVerifiedUser() &&
+          isValidId(workspaceId) &&
+          isValidId(taskId) &&
+          isValidOwlTask(incoming()) &&
+          incoming().id == existing().id &&
+          incoming().workspaceId == existing().workspaceId &&
+          incoming().createdByUid == existing().createdByUid &&
+          incoming().createdDateLabel == existing().createdDateLabel &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          (existing().status != 'finalizado' || isAdmin()) &&
+          (
+            isAdmin() ||
+            // Tier 1 (Workspace Owner or Task Creator): Full non-terminal task update
+            (
+              (isWorkspaceOwner(workspaceId) || (isWorkspaceMember(workspaceId) && existing().createdByUid == request.auth.uid)) &&
+              incoming().diff(existing()).affectedKeys().hasOnly([
+                'title', 'requestedBy', 'module', 'priority', 'deadline',
+                'status', 'observations', 'specs', 'updatedByUid', 'updatedAt'
+              ])
+            ) ||
+            // Tier 2 (Collaborator / Lead Dev): Operational state & notes update only
+            (
+              isWorkspaceMember(workspaceId) &&
+              incoming().diff(existing()).affectedKeys().hasOnly([
+                'status', 'deadline', 'observations', 'specs', 'updatedByUid', 'updatedAt'
+              ])
+            )
+          );
+
+        allow delete: if isVerifiedUser() &&
+          isValidId(workspaceId) &&
+          isValidId(taskId) &&
+          (isAdmin() || isWorkspaceOwner(workspaceId)) &&
+          !(taskId in getAfter(workspaceDocPath(workspaceId)).data.taskIds);
+      }
+    }
+  }
+}

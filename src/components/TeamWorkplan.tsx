@@ -16,6 +16,8 @@ import {
   Clock,
   ShieldCheck
 } from 'lucide-react';
+import { useCloudSync } from '../context/CloudSyncContext';
+import { CloudSyncBanner } from './CloudSyncBanner';
 
 interface RACIRow {
   activity: string;
@@ -86,10 +88,11 @@ const RACI_DATA: RACIRow[] = [
 
 export const TeamWorkplan: React.FC = () => {
   const [selectedMember, setSelectedMember] = useState<TeamMember>(TEAM_MEMBERS[0]);
-  const [syncMeetingDate, setSyncMeetingDate] = useState<string>('2026-10-26');
+  const { syncMeetingDate, updateSyncMeetingDate } = useCloudSync();
 
   return (
     <div className="space-y-8">
+      <CloudSyncBanner compact />
       {/* Intro Header */}
       <div className="p-6 rounded-2xl bg-neutral-900/60 border border-neutral-800 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-xl">
         <div className="max-w-2xl">
@@ -213,9 +216,13 @@ export const TeamWorkplan: React.FC = () => {
                   <input
                     type="date"
                     value={syncMeetingDate}
-                    onChange={(e) => setSyncMeetingDate(e.target.value)}
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        void updateSyncMeetingDate(e.target.value);
+                      }
+                    }}
                     className="bg-transparent text-xs text-amber-300 font-mono focus:outline-none cursor-pointer"
-                    title="Modificar fecha del próximo ritual semanal"
+                    title="Modificar fecha del próximo ritual semanal (guardado en la nube)"
                   />
                 </div>
               </div>

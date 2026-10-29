@@ -13,6 +13,7 @@ import { TeamWorkplan } from './components/TeamWorkplan';
 import { PrintableWorkPlan } from './components/PrintableWorkPlan';
 import { CustomerJourneySimulator } from './components/CustomerJourneySimulator';
 import { VictorStandaloneApp } from './components/VictorStandaloneApp';
+import { useCloudSync } from './context/CloudSyncContext';
 import { 
   Sparkles, 
   Workflow, 
@@ -57,10 +58,12 @@ export default function App() {
 
   // Copy link feedback on Hub
   const [copiedTarget, setCopiedTarget] = useState<'victor' | 'estrategia' | null>(null);
+  const { activeTeamCode } = useCloudSync();
 
   const copyStandaloneUrl = async (appName: 'victor' | 'estrategia') => {
     const url = new URL(window.location.href);
     url.searchParams.set('app', appName);
+    url.searchParams.set('key', activeTeamCode || 'DIVO-OWL');
     url.hash = '';
     try {
       await navigator.clipboard.writeText(url.toString());
