@@ -1,7 +1,7 @@
 /**
- * Security Rules Verification Suite — Dirty Dozen Adversarial Payloads
+ * Security Rules Verification Suite — Dirty Dozen Adversarial Payloads (Public Live Mode)
  * Validates that every Dirty Dozen attack vector in security_spec.md is rejected
- * with PERMISSION_DENIED while legitimate Tier 1 / Tier 2 operations succeed.
+ * with PERMISSION_DENIED while legitimate Public Live & Admin operations succeed.
  */
 
 import fs from 'node:fs';
@@ -18,18 +18,41 @@ interface DbState {
   workspaces: Record<string, Record<string, unknown>>;
   members: Record<string, Record<string, unknown>>;
   tasks: Record<string, Record<string, unknown>>;
+  decisions: Record<string, Record<string, unknown>>;
 }
 
 const REQUEST_TIME = 1793250000000;
 const ID_REGEX = /^[a-zA-Z0-9_\-]+$/;
+const PUBLIC_ACTOR_REGEX = /^pub-[a-zA-Z0-9_\-]+$/;
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+const DECISION_IDS = ['dir-pending-1', 'dir-pending-2', 'dir-pending-3', 'dir-pending-4'];
 
 function isValidId(id: unknown): id is string {
   return typeof id === 'string' && id.length >= 1 && id.length <= 128 && ID_REGEX.test(id);
 }
 
+function isPublicDivoWorkspace(workspaceId: unknown): workspaceId is string {
+  return isValidId(workspaceId) && workspaceId === 'divo-owl';
+}
+
+function isValidPublicActorId(actorId: unknown): actorId is string {
+  return (
+    isValidId(actorId) &&
+    actorId.length >= 10 &&
+    actorId.length <= 64 &&
+    PUBLIC_ACTOR_REGEX.test(actorId)
+  );
+}
+
 function isVerifiedUser(auth: AuthContext | null): auth is AuthContext {
   return auth !== null && auth.email_verified === true;
+}
+
+function isAuthorizedActor(actorId: unknown, auth: AuthContext | null): boolean {
+  if (auth === null) {
+    return isValidPublicActorId(actorId);
+  }
+  return isVerifiedUser(auth) && actorId === auth.uid;
 }
 
 function isBootstrapAdmin(auth: AuthContext | null): boolean {
@@ -40,12 +63,7 @@ function isAdmin(auth: AuthContext | null, db: DbState): boolean {
   return isVerifiedUser(auth) && (auth.email === 'jimenacmoreno@gmail.com' || Boolean(db.admins[auth.uid]));
 }
 
-function isWorkspaceMember(workspaceId: string, auth: AuthContext | null, db: DbState): boolean {
-  if (!auth) return false;
-  return Boolean(db.workspaces[workspaceId]) && Boolean(db.members[`${workspaceId}/${auth.uid}`]);
-}
-
-function isValidOwlTask(data: Record<string, unknown>, auth: AuthContext): boolean {
+function isValidOwlTask(data: Record<string, unknown>, auth: AuthContext | null): boolean {
   const requiredKeys = [
     'id', 'workspaceId', 'title', 'requestedBy', 'module', 'priority',
     'deadline', 'status', 'observations', 'specs', 'createdDateLabel',
@@ -57,7 +75,7 @@ function isValidOwlTask(data: Record<string, unknown>, auth: AuthContext): boole
 
   return (
     isValidId(data.id) &&
-    isValidId(data.workspaceId) &&
+    isPublicDivoWorkspace(data.workspaceId) &&
     typeof data.title === 'string' && data.title.length >= 1 && data.title.length <= 300 &&
     typeof data.requestedBy === 'string' && ['Coty', 'Yasmín', 'Sucursales', 'Administración'].includes(data.requestedBy) &&
     typeof data.module === 'string' && data.module.length >= 1 && data.module.length <= 100 &&
@@ -68,8 +86,7 @@ function isValidOwlTask(data: Record<string, unknown>, auth: AuthContext): boole
     typeof data.specs === 'string' && data.specs.length >= 0 && data.specs.length <= 2000 &&
     typeof data.createdDateLabel === 'string' && DATE_REGEX.test(data.createdDateLabel) &&
     isValidId(data.createdByUid) &&
-    isValidId(data.updatedByUid) &&
-    data.updatedByUid === auth.uid &&
+    isAuthorizedActor(data.updatedByUid, auth) &&
     typeof data.createdAt === 'number' &&
     typeof data.updatedAt === 'number'
   );
@@ -83,38 +100,8 @@ function evaluateAdminCreate(adminId: string, incoming: Record<string, unknown>,
   return incoming.uid === auth.uid && incoming.createdAt === REQUEST_TIME;
 }
 
-function evaluateMemberCreate(
-  workspaceId: string,
-  memberId: string,
-  incoming: Record<string, unknown>,
-  auth: AuthContext | null,
-  db: DbState,
-  postDb: DbState
-): boolean {
-  if (!isVerifiedUser(auth)) return false;
-  if (!isValidId(workspaceId) || !isValidId(memberId) || memberId !== auth.uid) return false;
-  const reqKeys = ['uid', 'workspaceId', 'displayName', 'role', 'teamCode', 'joinedAt'];
-  const keys = Object.keys(incoming);
-  if (!reqKeys.every((k) => keys.includes(k)) || !keys.every((k) => reqKeys.includes(k))) return false;
-  if (incoming.uid !== auth.uid || incoming.workspaceId !== workspaceId) return false;
-  if (typeof incoming.displayName !== 'string' || incoming.displayName.length < 1 || incoming.displayName.length > 60) return false;
-  if (incoming.role !== 'owner' && incoming.role !== 'collaborator') return false;
-  if (typeof incoming.teamCode !== 'string' || !ID_REGEX.test(incoming.teamCode)) return false;
-  if (incoming.joinedAt !== REQUEST_TIME) return false;
-
-  const existingWs = db.workspaces[workspaceId];
-  const postWs = postDb.workspaces[workspaceId];
-
-  if (!existingWs && postWs && postWs.ownerId === auth.uid && incoming.role === 'owner' && incoming.teamCode === postWs.teamCode) {
-    return true;
-  }
-  if (isAdmin(auth, db) && existingWs && incoming.role === 'owner' && incoming.teamCode === existingWs.teamCode) {
-    return true;
-  }
-  if (existingWs && incoming.role === 'collaborator' && incoming.teamCode === existingWs.teamCode) {
-    return true;
-  }
-  return false;
+function evaluateWorkspaceGet(workspaceId: string): boolean {
+  return isPublicDivoWorkspace(workspaceId);
 }
 
 function evaluateTaskCreate(
@@ -125,13 +112,13 @@ function evaluateTaskCreate(
   db: DbState,
   postDb: DbState
 ): boolean {
-  if (!isVerifiedUser(auth)) return false;
-  if (!isValidId(workspaceId) || !isValidId(taskId)) return false;
+  if (!isPublicDivoWorkspace(workspaceId) || !isValidId(taskId)) return false;
   if (!isValidOwlTask(incoming, auth)) return false;
   if (incoming.id !== taskId || incoming.workspaceId !== workspaceId) return false;
-  if (incoming.createdByUid !== auth.uid) return false;
+  if (!isAuthorizedActor(incoming.createdByUid, auth)) return false;
+  if (incoming.createdByUid !== incoming.updatedByUid) return false;
   if (incoming.createdAt !== REQUEST_TIME || incoming.updatedAt !== REQUEST_TIME) return false;
-  if (!(isWorkspaceMember(workspaceId, auth, db) || isAdmin(auth, db))) return false;
+  if (!db.workspaces[workspaceId]) return false;
   const postWs = postDb.workspaces[workspaceId];
   const postTaskIds = (postWs?.taskIds as string[]) || [];
   return postTaskIds.includes(taskId);
@@ -144,8 +131,8 @@ function evaluateTaskUpdate(
   auth: AuthContext | null,
   db: DbState
 ): boolean {
-  if (!isVerifiedUser(auth)) return false;
-  if (!isValidId(workspaceId) || !isValidId(taskId)) return false;
+  if (!isPublicDivoWorkspace(workspaceId) || !isValidId(taskId)) return false;
+  if (!db.workspaces[workspaceId]) return false;
   const existing = db.tasks[`${workspaceId}/${taskId}`];
   if (!existing) return false;
   if (!isValidOwlTask(incoming, auth)) return false;
@@ -165,25 +152,38 @@ function evaluateTaskUpdate(
   if (isAdmin(auth, db)) return true;
 
   const affectedKeys = Object.keys(incoming).filter((k) => incoming[k] !== existing[k]);
-  const isOwner = db.workspaces[workspaceId]?.ownerId === auth.uid;
-  const isCreator = existing.createdByUid === auth.uid;
-  const isMember = isWorkspaceMember(workspaceId, auth, db);
-
-  if (isMember && (isOwner || isCreator)) {
-    const allowedTier1 = [
-      'title', 'requestedBy', 'module', 'priority', 'deadline',
-      'status', 'observations', 'specs', 'updatedByUid', 'updatedAt'
-    ];
-    return affectedKeys.every((k) => allowedTier1.includes(k));
-  }
-  if (isMember) {
-    const allowedTier2 = ['status', 'deadline', 'observations', 'specs', 'updatedByUid', 'updatedAt'];
-    return affectedKeys.every((k) => allowedTier2.includes(k));
-  }
-  return false;
+  const allowedProgress = ['status', 'deadline', 'observations', 'specs', 'updatedByUid', 'updatedAt'];
+  const allowedFull = [
+    'title', 'requestedBy', 'module', 'priority', 'deadline',
+    'status', 'observations', 'specs', 'updatedByUid', 'updatedAt'
+  ];
+  return (
+    affectedKeys.every((k) => allowedProgress.includes(k)) ||
+    affectedKeys.every((k) => allowedFull.includes(k))
+  );
 }
 
-function evaluateTaskList(): boolean {
+function evaluateDecisionWrite(
+  workspaceId: string,
+  decisionId: string,
+  incoming: Record<string, unknown>,
+  auth: AuthContext | null,
+  db: DbState
+): boolean {
+  if (!isPublicDivoWorkspace(workspaceId)) return false;
+  if (!DECISION_IDS.includes(decisionId)) return false;
+  if (!db.workspaces[workspaceId]) return false;
+  const reqKeys = ['id', 'workspaceId', 'text', 'resolved', 'updatedByUid', 'updatedAt'];
+  const keys = Object.keys(incoming);
+  if (!reqKeys.every((k) => keys.includes(k)) || !keys.every((k) => reqKeys.includes(k))) return false;
+  if (incoming.id !== decisionId || incoming.workspaceId !== workspaceId) return false;
+  if (typeof incoming.text !== 'string' || incoming.text.length < 1 || incoming.text.length > 1500) return false;
+  if (typeof incoming.resolved !== 'boolean') return false;
+  if (!isAuthorizedActor(incoming.updatedByUid, auth)) return false;
+  return incoming.updatedAt === REQUEST_TIME;
+}
+
+function evaluateList(): boolean {
   return false;
 }
 
@@ -200,16 +200,21 @@ function assertAllowed(allowed: boolean, name: string): void {
 }
 
 function runSuite(): void {
-  const rulesPath = path.resolve(process.cwd(), fs.existsSync('firestore.rules') ? 'firestore.rules' : 'DRAFT_firestore.rules');
+  const targetFile = fs.existsSync('DRAFT_firestore.rules') ? 'DRAFT_firestore.rules' : 'firestore.rules';
+  const rulesPath = path.resolve(process.cwd(), targetFile);
   const rulesText = fs.readFileSync(rulesPath, 'utf-8');
-  if (!rulesText.includes("allow read, write: if false;") || !rulesText.includes("email_verified == true")) {
-    throw new Error('Rules file missing mandatory Zero-Trust primitives.');
+  if (
+    !rulesText.includes('allow read, write: if false;') ||
+    !rulesText.includes('email_verified == true') ||
+    !rulesText.includes('isPublicDivoWorkspace')
+  ) {
+    throw new Error(`Rules file ${targetFile} missing mandatory Zero-Trust primitives.`);
   }
 
   const cotyAuth: AuthContext = { uid: 'coty_uid', email: 'jimenacmoreno@gmail.com', email_verified: true };
   const victorAuth: AuthContext = { uid: 'victor_uid', email: 'victor@divo.com', email_verified: true };
-  const outsiderAuth: AuthContext = { uid: 'attacker_uid', email: 'attacker@evil.com', email_verified: true };
   const spoofedAdminUnverified: AuthContext = { uid: 'spoof_uid', email: 'jimenacmoreno@gmail.com', email_verified: false };
+  const publicVisitorActorId = 'pub-divo-live-visitor01';
 
   const baseTask: Record<string, unknown> = {
     id: 'v-req-08',
@@ -224,7 +229,7 @@ function runSuite(): void {
     specs: 'Unificar flujo modal.',
     createdDateLabel: '2026-10-28',
     createdByUid: 'coty_uid',
-    updatedByUid: 'victor_uid',
+    updatedByUid: publicVisitorActorId,
     createdAt: 1793100000000,
     updatedAt: REQUEST_TIME
   };
@@ -241,23 +246,21 @@ function runSuite(): void {
       'divo-owl': {
         id: 'divo-owl',
         name: 'DIVO Owl',
-        ownerId: 'coty_uid',
+        ownerId: publicVisitorActorId,
         teamCode: 'DIVO-OWL',
         syncMeetingDate: '2026-10-26',
         taskIds: ['v-req-08', 'v-req-01'],
         createdAt: 1793100000000,
         updatedAt: 1793100000000,
-        updatedByUid: 'coty_uid'
+        updatedByUid: publicVisitorActorId
       }
     },
-    members: {
-      'divo-owl/coty_uid': { uid: 'coty_uid', workspaceId: 'divo-owl', displayName: 'Coty', role: 'owner', teamCode: 'DIVO-OWL', joinedAt: 1793100000000 },
-      'divo-owl/victor_uid': { uid: 'victor_uid', workspaceId: 'divo-owl', displayName: 'Víctor', role: 'collaborator', teamCode: 'DIVO-OWL', joinedAt: 1793100000000 }
-    },
+    members: {},
     tasks: {
       'divo-owl/v-req-08': baseTask,
       'divo-owl/v-req-01': finalizedTask
-    }
+    },
+    decisions: {}
   };
 
   // 1. Unverified Email Admin Spoof
@@ -266,33 +269,13 @@ function runSuite(): void {
     '1. Unverified Email Admin Spoof'
   );
 
-  // 2. Self-Assigned Owner Privilege Escalation
+  // 2. Arbitrary Workspace Intrusion
   assertDenied(
-    evaluateMemberCreate(
-      'divo-owl',
-      'attacker_uid',
-      { uid: 'attacker_uid', workspaceId: 'divo-owl', displayName: 'Attacker', role: 'owner', teamCode: 'DIVO-OWL', joinedAt: REQUEST_TIME },
-      outsiderAuth,
-      baseDb,
-      baseDb
-    ),
-    '2. Self-Assigned Owner Privilege Escalation'
+    evaluateWorkspaceGet('evil-workspace'),
+    '2. Arbitrary Workspace Intrusion'
   );
 
-  // 3. Invalid Team Code Intrusion
-  assertDenied(
-    evaluateMemberCreate(
-      'divo-owl',
-      'attacker_uid',
-      { uid: 'attacker_uid', workspaceId: 'divo-owl', displayName: 'Attacker', role: 'collaborator', teamCode: 'WRONG-CODE', joinedAt: REQUEST_TIME },
-      outsiderAuth,
-      baseDb,
-      baseDb
-    ),
-    '3. Invalid Team Code Intrusion'
-  );
-
-  // 4. Identity Spoofing on Task Creation
+  // 3. Unauthenticated Firebase UID Spoof
   const postWithNewTask: DbState = {
     ...baseDb,
     workspaces: {
@@ -303,12 +286,25 @@ function runSuite(): void {
     evaluateTaskCreate(
       'divo-owl',
       'task-spoof',
+      { ...baseTask, id: 'task-spoof', createdByUid: 'coty_uid', updatedByUid: 'coty_uid', createdAt: REQUEST_TIME, updatedAt: REQUEST_TIME },
+      null,
+      baseDb,
+      postWithNewTask
+    ),
+    '3. Unauthenticated Firebase UID Spoof'
+  );
+
+  // 4. Cross-UID Identity Spoofing (Verified user spoofing another UID)
+  assertDenied(
+    evaluateTaskCreate(
+      'divo-owl',
+      'task-spoof',
       { ...baseTask, id: 'task-spoof', createdByUid: 'coty_uid', updatedByUid: 'victor_uid', createdAt: REQUEST_TIME, updatedAt: REQUEST_TIME },
       victorAuth,
       baseDb,
       postWithNewTask
     ),
-    '4. Identity Spoofing on Task Creation'
+    '4. Cross-UID Identity Spoofing'
   );
 
   // 5. Shadow Field Injection ("Ghost Field")
@@ -316,8 +312,8 @@ function runSuite(): void {
     evaluateTaskUpdate(
       'divo-owl',
       'v-req-08',
-      { ...baseTask, isVerified: true, updatedByUid: 'victor_uid', updatedAt: REQUEST_TIME },
-      victorAuth,
+      { ...baseTask, isVerified: true, updatedByUid: publicVisitorActorId, updatedAt: REQUEST_TIME },
+      null,
       baseDb
     ),
     '5. Shadow Field Injection'
@@ -328,8 +324,8 @@ function runSuite(): void {
     evaluateTaskUpdate(
       'divo-owl',
       'v-req-01',
-      { ...finalizedTask, status: 'en_curso', updatedByUid: 'victor_uid', updatedAt: REQUEST_TIME },
-      victorAuth,
+      { ...finalizedTask, status: 'en_curso', updatedByUid: publicVisitorActorId, updatedAt: REQUEST_TIME },
+      null,
       baseDb
     ),
     '6. Terminal State Mutation Bypass'
@@ -340,8 +336,8 @@ function runSuite(): void {
     evaluateTaskCreate(
       'divo-owl',
       'task-orphan',
-      { ...baseTask, id: 'task-orphan', createdByUid: 'victor_uid', updatedByUid: 'victor_uid', createdAt: REQUEST_TIME, updatedAt: REQUEST_TIME },
-      victorAuth,
+      { ...baseTask, id: 'task-orphan', createdByUid: publicVisitorActorId, updatedByUid: publicVisitorActorId, createdAt: REQUEST_TIME, updatedAt: REQUEST_TIME },
+      null,
       baseDb,
       baseDb // task-orphan NOT added to postDb.workspaces['divo-owl'].taskIds!
     ),
@@ -354,8 +350,8 @@ function runSuite(): void {
     evaluateTaskCreate(
       'divo-owl',
       poisonedId,
-      { ...baseTask, id: poisonedId, createdByUid: 'victor_uid', updatedByUid: 'victor_uid', createdAt: REQUEST_TIME, updatedAt: REQUEST_TIME },
-      victorAuth,
+      { ...baseTask, id: poisonedId, createdByUid: publicVisitorActorId, updatedByUid: publicVisitorActorId, createdAt: REQUEST_TIME, updatedAt: REQUEST_TIME },
+      null,
       baseDb,
       baseDb
     ),
@@ -367,8 +363,8 @@ function runSuite(): void {
     evaluateTaskUpdate(
       'divo-owl',
       'v-req-08',
-      { ...baseTask, deadline: 'not-a-date', updatedByUid: 'victor_uid', updatedAt: REQUEST_TIME },
-      victorAuth,
+      { ...baseTask, deadline: 'not-a-date', updatedByUid: publicVisitorActorId, updatedAt: REQUEST_TIME },
+      null,
       baseDb
     ),
     '9. Value Poisoning on Whitelisted Update Key'
@@ -379,8 +375,8 @@ function runSuite(): void {
     evaluateTaskUpdate(
       'divo-owl',
       'v-req-08',
-      { ...baseTask, createdByUid: 'victor_uid', updatedByUid: 'coty_uid', updatedAt: REQUEST_TIME },
-      cotyAuth,
+      { ...baseTask, createdByUid: publicVisitorActorId, updatedByUid: publicVisitorActorId, updatedAt: REQUEST_TIME },
+      null,
       baseDb
     ),
     '10. Immortal Field Tampering'
@@ -391,8 +387,8 @@ function runSuite(): void {
     evaluateTaskCreate(
       'divo-owl',
       'task-spoof',
-      { ...baseTask, id: 'task-spoof', createdByUid: 'victor_uid', updatedByUid: 'victor_uid', createdAt: REQUEST_TIME - 86400000, updatedAt: REQUEST_TIME },
-      victorAuth,
+      { ...baseTask, id: 'task-spoof', createdByUid: publicVisitorActorId, updatedByUid: publicVisitorActorId, createdAt: REQUEST_TIME - 86400000, updatedAt: REQUEST_TIME },
+      null,
       baseDb,
       postWithNewTask
     ),
@@ -400,18 +396,48 @@ function runSuite(): void {
   );
 
   // 12. Unauthorized Collection Scraping (list)
-  assertDenied(evaluateTaskList(), '12. Unauthorized Collection Scraping (list)');
+  assertDenied(evaluateList(), '12. Unauthorized Collection Scraping (list)');
 
-  // Positive Controls: Legitimate Collaborator & Admin Operations
+  // Positive Controls: Legitimate Public Live & Admin Operations
   assertAllowed(
     evaluateTaskUpdate(
       'divo-owl',
       'v-req-08',
-      { ...baseTask, status: 'terminada', observations: 'Listo para pruebas de Coty.', updatedByUid: 'victor_uid', updatedAt: REQUEST_TIME },
-      victorAuth,
+      { ...baseTask, status: 'terminada', observations: 'Listo en vivo desde Vercel sin login.', updatedByUid: publicVisitorActorId, updatedAt: REQUEST_TIME },
+      null,
       baseDb
     ),
-    'Positive Control: Collaborator updates active task'
+    'Positive Control: Public Live visitor updates active task without login'
+  );
+
+  assertAllowed(
+    evaluateTaskCreate(
+      'divo-owl',
+      'task-spoof',
+      { ...baseTask, id: 'task-spoof', createdByUid: publicVisitorActorId, updatedByUid: publicVisitorActorId, createdAt: REQUEST_TIME, updatedAt: REQUEST_TIME },
+      null,
+      baseDb,
+      postWithNewTask
+    ),
+    'Positive Control: Public Live visitor creates task atomically'
+  );
+
+  assertAllowed(
+    evaluateDecisionWrite(
+      'divo-owl',
+      'dir-pending-1',
+      {
+        id: 'dir-pending-1',
+        workspaceId: 'divo-owl',
+        text: 'Vincular a la cita más reciente previa a la nota en Sly Soft.',
+        resolved: true,
+        updatedByUid: publicVisitorActorId,
+        updatedAt: REQUEST_TIME
+      },
+      null,
+      baseDb
+    ),
+    'Positive Control: Public Live visitor updates Direction pending decision'
   );
 
   assertAllowed(
@@ -425,7 +451,7 @@ function runSuite(): void {
     'Positive Control: Admin overrides finalized task state'
   );
 
-  console.log('ALL 12 DIRTY DOZEN PAYLOADS DENIED & POSITIVE CONTROLS PASSED.');
+  console.log(`ALL 12 DIRTY DOZEN PAYLOADS DENIED & POSITIVE CONTROLS PASSED (${targetFile}).`);
 }
 
 runSuite();

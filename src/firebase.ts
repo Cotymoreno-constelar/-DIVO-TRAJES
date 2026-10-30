@@ -17,8 +17,17 @@ export const FIREBASE_PROJECT_ID = firebaseConfig.projectId;
 export const WORKSPACE_ID = 'divo-owl';
 export const DEFAULT_TEAM_CODE = 'DIVO-OWL';
 export const BOOTSTRAP_ADMIN_EMAIL = 'jimenacmoreno@gmail.com';
+export const PUBLIC_ACTOR_STORAGE_KEY = 'divo_public_actor_id_v1';
+
+export const DECISION_IDS = [
+  'dir-pending-1',
+  'dir-pending-2',
+  'dir-pending-3',
+  'dir-pending-4',
+] as const;
 
 export const ID_REGEX = /^[a-zA-Z0-9_\-]+$/;
+export const PUBLIC_ACTOR_REGEX = /^pub-[a-zA-Z0-9_\-]+$/;
 export const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
 export const MAX_ID_LENGTH = 128;
@@ -30,6 +39,7 @@ export const MAX_TITLE_LENGTH = 300;
 export const MAX_MODULE_LENGTH = 100;
 export const MAX_OBSERVATIONS_LENGTH = 2000;
 export const MAX_SPECS_LENGTH = 2000;
+export const MAX_DECISION_TEXT_LENGTH = 1500;
 
 const ALLOWED_REQUESTERS: TaskRequester[] = ['Coty', 'Yasmín', 'Sucursales', 'Administración'];
 const ALLOWED_PRIORITIES: TaskPriority[] = ['urgente', 'alta', 'media', 'baja'];
@@ -39,7 +49,7 @@ const ALLOWED_STATUSES: TaskStatus[] = [
   'terminada',
   'probada',
   'bloqueada',
-  'finalizado'
+  'finalizado',
 ];
 
 // Validate connection to Firestore on application boot
@@ -53,6 +63,34 @@ async function testConnection() {
   }
 }
 testConnection();
+
+// Generate or retrieve a non-PII public live actor ID (matches ^pub-[a-zA-Z0-9_\-]+$, length 10..64)
+export function getOrCreatePublicActorId(): string {
+  try {
+    const existing = localStorage.getItem(PUBLIC_ACTOR_STORAGE_KEY);
+    if (
+      existing &&
+      existing.length >= 10 &&
+      existing.length <= 64 &&
+      PUBLIC_ACTOR_REGEX.test(existing)
+    ) {
+      return existing;
+    }
+  } catch {
+    // ignore storage read error
+  }
+
+  const randomPart = Math.random().toString(36).replace(/[^a-z0-9]/gi, '').slice(0, 10) || 'divolive';
+  const timePart = Date.now().toString(36).replace(/[^a-z0-9]/gi, '');
+  const generated = `pub-${randomPart}-${timePart}`.slice(0, 60);
+
+  try {
+    localStorage.setItem(PUBLIC_ACTOR_STORAGE_KEY, generated);
+  } catch {
+    // ignore storage write error
+  }
+  return generated;
+}
 
 // Mandatory structured Firestore error handler
 export enum OperationType {
@@ -122,10 +160,17 @@ export function sanitizeDate(rawDate: string | undefined, fallback = '2026-11-15
 
 export function sanitizeDisplayName(rawName: string | null | undefined): string {
   const base = (rawName || 'Equipo DIVO').trim();
-  // Strip email domain if displayName happens to look like an email to avoid PII storage
   const withoutDomain = base.includes('@') ? base.split('@')[0] : base;
   const trimmed = withoutDomain.slice(0, MAX_DISPLAY_NAME_LENGTH).trim();
   return trimmed.length >= 1 ? trimmed : 'Equipo DIVO';
+}
+
+export function sanitizeDecisionText(
+  rawText: string | null | undefined,
+  fallback = 'Pendiente de confirmar con Dirección.'
+): string {
+  const cleaned = (rawText || '').trim().slice(0, MAX_DECISION_TEXT_LENGTH);
+  return cleaned.length >= 1 ? cleaned : fallback.slice(0, MAX_DECISION_TEXT_LENGTH);
 }
 
 export function sanitizeTaskFields(task: VictorTask): VictorTask {

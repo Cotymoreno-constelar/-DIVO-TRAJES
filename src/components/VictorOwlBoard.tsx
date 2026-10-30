@@ -45,7 +45,6 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
     canDeleteTasks,
     canEditAllFieldsOfTask,
     canModifyFinalizedTask,
-    memberRole,
   } = useCloudSync();
 
   // Filters & State
@@ -125,11 +124,11 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
   const handleStatusChange = (taskId: string, newStat: TaskStatus) => {
     const target = tasks.find((t) => t.id === taskId);
     if (target?.status === 'finalizado' && !canModifyFinalizedTask) {
-      showToast('Las solicitudes Finalizadas solo pueden reabrirse por Dirección (Coty).');
+      showToast('Las solicitudes Finalizadas solo pueden reabrirse desde Admin Dirección (Coty).');
       return;
     }
     void updateTaskProgress(taskId, { status: newStat });
-    showToast(memberRole ? 'Estado guardado en la nube' : 'Estado guardado en este navegador');
+    showToast('Estado guardado en vivo para todo el equipo');
   };
 
   // Handle changing deadline directly (Modifiable Date!)
@@ -141,11 +140,7 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
       return;
     }
     void updateTaskProgress(taskId, { deadline: newDate });
-    showToast(
-      memberRole
-        ? `Fecha límite guardada en la nube: ${newDate}`
-        : `Fecha límite modificada: ${newDate}`
-    );
+    showToast(`Fecha límite guardada en vivo: ${newDate}`);
   };
 
   // Handle save inline observation
@@ -153,14 +148,14 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
     const trimmed = tempObsText.trim() || 'Sin observaciones registradas todavía.';
     void updateTaskProgress(taskId, { observations: trimmed });
     setEditingObsTaskId(null);
-    showToast(memberRole ? 'Observación guardada en la nube' : 'Observación guardada');
+    showToast('Observación guardada en vivo');
   };
 
   // Handle confirmed delete task
   const executeDeleteTask = (taskId: string) => {
     void deleteTask(taskId);
     setConfirmDeleteId(null);
-    showToast('Solicitud eliminada del tablero');
+    showToast('Solicitud eliminada en vivo del tablero');
   };
 
   // Add new task
@@ -185,11 +180,7 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
     setIsModalOpen(false);
     resetForm();
     if (onNavigateSection) onNavigateSection('board');
-    showToast(
-      memberRole
-        ? `Solicitud creada y guardada en la nube (${newTask.deadline})`
-        : `Solicitud creada con fecha límite: ${newTask.deadline}`
-    );
+    showToast(`Solicitud creada y publicada en vivo (${newTask.deadline})`);
   };
 
   // Update existing task
@@ -198,11 +189,7 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
     if (!editingTask) return;
 
     void updateFullTask(editingTask);
-    showToast(
-      memberRole
-        ? `Solicitud "${editingTask.title}" guardada en la nube`
-        : `Solicitud "${editingTask.title}" actualizada`
-    );
+    showToast(`Solicitud "${editingTask.title}" guardada en vivo`);
     setEditingTask(null);
   };
 
@@ -598,7 +585,7 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                                     <Edit3 className="w-4 h-4" />
                                   </button>
                                 )}
-                                {canDeleteTasks && (
+                                {canDeleteTasks && !isLocked && (
                                   <button
                                     onClick={() => setConfirmDeleteId(task.id)}
                                     className="min-h-[38px] min-w-[38px] rounded-xl bg-neutral-950/80 border border-neutral-800 text-neutral-400 hover:text-red-400 flex items-center justify-center cursor-pointer"
@@ -919,7 +906,7 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                                       <Edit3 className="w-4 h-4" />
                                     </button>
                                   )}
-                                  {canDeleteTasks && (
+                                  {canDeleteTasks && (task.status !== 'finalizado' || canModifyFinalizedTask) && (
                                     <button
                                       onClick={() => setConfirmDeleteId(task.id)}
                                       className="p-1.5 rounded-lg text-neutral-500 hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"

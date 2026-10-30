@@ -12,7 +12,7 @@ import {
 import { TaskStatus, VictorTask } from '../types/flow';
 import { useCloudSync } from '../context/CloudSyncContext';
 import { CloudSyncBanner } from './CloudSyncBanner';
-import { MAX_OBSERVATIONS_LENGTH } from '../firebase';
+import { MAX_OBSERVATIONS_LENGTH, MAX_DECISION_TEXT_LENGTH } from '../firebase';
 import {
   Calendar,
   CheckCircle2,
@@ -33,34 +33,16 @@ interface StrategicPlanTrackerProps {
   hideCloudBanner?: boolean;
 }
 
-const DIRECTION_DECISIONS_STORAGE_KEY = 'divo_direction_decisions_v1';
-
-function loadSavedDecisions(): Record<string, { text: string; resolved: boolean }> {
-  try {
-    const raw = localStorage.getItem(DIRECTION_DECISIONS_STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === 'object') return parsed;
-    }
-  } catch {
-    // ignore
-  }
-  const initial: Record<string, { text: string; resolved: boolean }> = {};
-  for (const item of DIRECTION_PENDING_ITEMS) {
-    initial[item.id] = { text: item.defaultProposal, resolved: false };
-  }
-  return initial;
-}
-
 export const StrategicPlanTracker: React.FC<StrategicPlanTrackerProps> = ({
   variant = 'estrategia',
   hideCloudBanner = false,
 }) => {
   const {
     tasks,
+    decisions,
     updateTaskProgress,
+    saveDirectionDecision,
     canModifyFinalizedTask,
-    memberRole,
   } = useCloudSync();
 
   const isVictorTheme = variant === 'victor';
@@ -76,8 +58,8 @@ export const StrategicPlanTracker: React.FC<StrategicPlanTrackerProps> = ({
   const [editingObsId, setEditingObsId] = useState<string | null>(null);
   const [tempObs, setTempObs] = useState<string>('');
 
-  // Direction decisions state
-  const [decisions, setDecisions] = useState<Record<string, { text: string; resolved: boolean }>>(loadSavedDecisions);
+  // Local draft overrides while typing Direction decisions before blur/apply
+  const [decisionDrafts, setDecisionDrafts] = useState<Record<string, string>>({});
 
   // Toast feedback
   const [toast, setToast] = useState<string | null>(null);
@@ -108,11 +90,11 @@ export const StrategicPlanTracker: React.FC<StrategicPlanTrackerProps> = ({
     const current = tasksById.get(taskId);
     if (!current) return;
     if (current.status === 'finalizado' && !canModifyFinalizedTask) {
-      notify('Las tareas Finalizadas solo pueden reabrirse por Dirección (Coty).');
+      notify('Las tareas Finalizadas solo pueden reabrirse desde Admin Dirección (Coty).');
       return;
     }
     void updateTaskProgress(taskId, { status: nextStatus });
-    notify(memberRole ? 'Estado sincronizado en la nube' : 'Estado actualizado localmente');
+    notify('Estado guardado en vivo para todo el equipo');
   };
 
   const handleDeadlineChange = (taskId: string, nextDate: string) => {
@@ -124,31 +106,40 @@ export const StrategicPlanTracker: React.FC<StrategicPlanTrackerProps> = ({
       return;
     }
     void updateTaskProgress(taskId, { deadline: nextDate });
-    notify(memberRole ? `Fecha límite guardada en la nube (${nextDate})` : `Fecha límite actualizada (${nextDate})`);
+    notify(`Fecha límite guardada en vivo (${nextDate})`);
   };
 
   const handleSaveObs = (taskId: string) => {
     const clean = tempObs.trim() || 'Sin observaciones registradas todavía.';
     void updateTaskProgress(taskId, { observations: clean });
     setEditingObsId(null);
-    notify(memberRole ? 'Observación sincronizada en la nube' : 'Observación actualizada');
+    notify('Observación sincronizada en vivo');
   };
 
-  const handleSaveDecisionLocal = (id: string, text: string, resolved: boolean) => {
-    const next = { ...decisions, [id]: { text, resolved } };
-    setDecisions(next);
-    try {
-      localStorage.setItem(DIRECTION_DECISIONS_STORAGE_KEY, JSON.stringify(next));
-    } catch {
-      // ignore
-    }
+  const handlePersistDecisionDraft = async (id: string, resolvedOverride?: boolean) => {
+    const liveEntry = decisions[id];
+    const textToSave = (decisionDrafts[id] ?? liveEntry?.text ?? '').trim();
+    if (!textToSave) return;
+    const nextResolved = resolvedOverride !== undefined ? resolvedOverride : Boolean(liveEntry?.resolved);
+    await saveDirectionDecision(id, textToSave, nextResolved);
+    setDecisionDrafts((prev) => {
+      const copy = { ...prev };
+      delete copy[id];
+      return copy;
+    });
   };
 
   const handlePushDecisionToVictorTasks = async (itemId: string, title: string, relatedTaskIds: string[]) => {
-    const entry = decisions[itemId];
-    if (!entry || !entry.text.trim()) return;
+    const liveEntry = decisions[itemId];
+    const draftText = (decisionDrafts[itemId] ?? liveEntry?.text ?? '').trim();
+    if (!draftText) return;
 
-    handleSaveDecisionLocal(itemId, entry.text, true);
+    await saveDirectionDecision(itemId, draftText, true);
+    setDecisionDrafts((prev) => {
+      const copy = { ...prev };
+      delete copy[itemId];
+      return copy;
+    });
 
     let updatedCount = 0;
     for (const tId of relatedTaskIds) {
@@ -156,7 +147,7 @@ export const StrategicPlanTracker: React.FC<StrategicPlanTrackerProps> = ({
       if (!existing) continue;
       if (existing.status === 'finalizado' && !canModifyFinalizedTask) continue;
 
-      const prefix = `[Definición Dirección · ${title}]: ${entry.text.trim()}`;
+      const prefix = `[Definición Dirección · ${title}]: ${draftText}`;
       const baseWithoutOldDef = existing.observations.replace(/\[Definición Dirección · [^\]]+\]:[^|]*(\|\s*)?/g, '').trim();
       const combined = `${prefix} | ${baseWithoutOldDef}`.slice(0, MAX_OBSERVATIONS_LENGTH);
       await updateTaskProgress(tId, { observations: combined });
@@ -165,8 +156,8 @@ export const StrategicPlanTracker: React.FC<StrategicPlanTrackerProps> = ({
 
     notify(
       updatedCount > 0
-        ? `Definición aplicada en ${updatedCount} tarea(s) del tablero de Víctor`
-        : 'Definición guardada en el seguimiento estratégico'
+        ? `Definición guardada en vivo y aplicada en ${updatedCount} tarea(s) de Víctor`
+        : 'Definición guardada en vivo en el seguimiento estratégico'
     );
   };
 
@@ -1254,6 +1245,7 @@ export const StrategicPlanTracker: React.FC<StrategicPlanTrackerProps> = ({
                 text: item.defaultProposal,
                 resolved: false,
               };
+              const displayedText = decisionDrafts[item.id] ?? currentDecision.text;
               return (
                 <div
                   key={item.id}
@@ -1280,14 +1272,19 @@ export const StrategicPlanTracker: React.FC<StrategicPlanTrackerProps> = ({
 
                   <div className="space-y-2.5 pt-2 border-t border-neutral-800/80">
                     <label className="text-[11px] text-neutral-400 block">
-                      Resolución / Criterio de Dirección:
+                      Resolución / Criterio de Dirección (se guarda en vivo):
                     </label>
                     <textarea
                       rows={2}
-                      value={currentDecision.text}
+                      maxLength={MAX_DECISION_TEXT_LENGTH}
+                      value={displayedText}
                       onChange={(e) =>
-                        handleSaveDecisionLocal(item.id, e.target.value, currentDecision.resolved)
+                        setDecisionDrafts((prev) => ({
+                          ...prev,
+                          [item.id]: e.target.value,
+                        }))
                       }
+                      onBlur={() => void handlePersistDecisionDraft(item.id)}
                       className="w-full rounded-xl bg-neutral-950 border border-neutral-800 px-3 py-2 text-xs text-neutral-100 focus:outline-none focus:border-neutral-600"
                     />
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">

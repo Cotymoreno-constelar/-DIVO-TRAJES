@@ -18,6 +18,23 @@ service cloud.firestore {
         id.matches('^[a-zA-Z0-9_\\-]+$');
     }
 
+    function isPublicDivoWorkspace(workspaceId) {
+      return isValidId(workspaceId) && workspaceId == 'divo-owl';
+    }
+
+    function isValidDecisionId(decisionId) {
+      return isValidId(decisionId) &&
+        decisionId.size() == 13 &&
+        (decisionId in ['dir-pending-1', 'dir-pending-2', 'dir-pending-3', 'dir-pending-4']);
+    }
+
+    function isValidPublicActorId(actorId) {
+      return isValidId(actorId) &&
+        actorId.size() >= 10 &&
+        actorId.size() <= 64 &&
+        actorId.matches('^pub-[a-zA-Z0-9_\\-]+$');
+    }
+
     function incoming() {
       return request.resource.data;
     }
@@ -32,6 +49,11 @@ service cloud.firestore {
 
     function isVerifiedUser() {
       return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isAuthorizedActor(actorId) {
+      return (request.auth == null && isValidPublicActorId(actorId)) ||
+        (isVerifiedUser() && actorId == request.auth.uid);
     }
 
     function isBootstrapAdmin() {
@@ -58,12 +80,14 @@ service cloud.firestore {
     }
 
     function isWorkspaceMember(workspaceId) {
-      return exists(workspaceDocPath(workspaceId)) &&
+      return isVerifiedUser() &&
+        exists(workspaceDocPath(workspaceId)) &&
         exists(memberDocPath(workspaceId, request.auth.uid));
     }
 
     function isWorkspaceOwner(workspaceId) {
-      return exists(workspaceDocPath(workspaceId)) &&
+      return isVerifiedUser() &&
+        exists(workspaceDocPath(workspaceId)) &&
         exists(memberDocPath(workspaceId, request.auth.uid)) &&
         get(workspaceDocPath(workspaceId)).data.ownerId == request.auth.uid;
     }
@@ -75,6 +99,7 @@ service cloud.firestore {
       return data.keys().hasAll(['uid', 'createdAt']) &&
         data.keys().hasOnly(['uid', 'createdAt']) &&
         isValidId(data.uid) &&
+        isVerifiedUser() &&
         data.uid == request.auth.uid &&
         data.createdAt is timestamp;
     }
@@ -102,7 +127,7 @@ service cloud.firestore {
           'id', 'name', 'ownerId', 'teamCode', 'syncMeetingDate',
           'taskIds', 'createdAt', 'updatedAt', 'updatedByUid'
         ]) &&
-        isValidId(data.id) &&
+        isPublicDivoWorkspace(data.id) &&
         data.name is string && data.name.size() >= 1 && data.name.size() <= 120 &&
         isValidId(data.ownerId) &&
         data.teamCode is string && data.teamCode.size() >= 4 && data.teamCode.size() <= 32 &&
@@ -112,8 +137,7 @@ service cloud.firestore {
         isValidTaskIdsList(data.taskIds) &&
         data.createdAt is timestamp &&
         data.updatedAt is timestamp &&
-        isValidId(data.updatedByUid) &&
-        data.updatedByUid == request.auth.uid;
+        isAuthorizedActor(data.updatedByUid);
     }
 
     function isValidWorkspaceMember(data) {
@@ -124,8 +148,9 @@ service cloud.firestore {
           'uid', 'workspaceId', 'displayName', 'role', 'teamCode', 'joinedAt'
         ]) &&
         isValidId(data.uid) &&
+        isVerifiedUser() &&
         data.uid == request.auth.uid &&
-        isValidId(data.workspaceId) &&
+        isPublicDivoWorkspace(data.workspaceId) &&
         data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 60 &&
         data.role is string && data.role.size() >= 5 && data.role.size() <= 12 &&
         (data.role in ['owner', 'collaborator']) &&
@@ -146,7 +171,7 @@ service cloud.firestore {
           'createdByUid', 'updatedByUid', 'createdAt', 'updatedAt'
         ]) &&
         isValidId(data.id) &&
-        isValidId(data.workspaceId) &&
+        isPublicDivoWorkspace(data.workspaceId) &&
         data.title is string && data.title.size() >= 1 && data.title.size() <= 300 &&
         data.requestedBy is string && data.requestedBy.size() >= 4 && data.requestedBy.size() <= 20 &&
         (data.requestedBy in ['Coty', 'Yasmín', 'Sucursales', 'Administración']) &&
@@ -162,9 +187,23 @@ service cloud.firestore {
         data.createdDateLabel is string && data.createdDateLabel.size() == 10 &&
         data.createdDateLabel.matches('^\\d{4}-\\d{2}-\\d{2}$') &&
         isValidId(data.createdByUid) &&
-        isValidId(data.updatedByUid) &&
-        data.updatedByUid == request.auth.uid &&
+        isAuthorizedActor(data.updatedByUid) &&
         data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidDirectionDecision(data) {
+      return data.keys().hasAll([
+          'id', 'workspaceId', 'text', 'resolved', 'updatedByUid', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'workspaceId', 'text', 'resolved', 'updatedByUid', 'updatedAt'
+        ]) &&
+        isValidDecisionId(data.id) &&
+        isPublicDivoWorkspace(data.workspaceId) &&
+        data.text is string && data.text.size() >= 1 && data.text.size() <= 1500 &&
+        data.resolved is bool &&
+        isAuthorizedActor(data.updatedByUid) &&
         data.updatedAt is timestamp;
     }
 
@@ -193,52 +232,43 @@ service cloud.firestore {
     // COLLECTION: /workspaces/{workspaceId}
     // =========================================================================
     match /workspaces/{workspaceId} {
-      allow get: if isVerifiedUser() &&
-        isValidId(workspaceId) &&
-        (isWorkspaceMember(workspaceId) || isAdmin());
+      allow get: if isPublicDivoWorkspace(workspaceId);
 
       allow list: if false;
 
-      allow create: if isVerifiedUser() &&
-        isValidId(workspaceId) &&
-        workspaceId == 'divo-owl' &&
+      allow create: if isPublicDivoWorkspace(workspaceId) &&
         isValidWorkspace(incoming()) &&
         incoming().id == workspaceId &&
-        incoming().ownerId == request.auth.uid &&
+        isAuthorizedActor(incoming().ownerId) &&
+        incoming().ownerId == incoming().updatedByUid &&
+        incoming().teamCode == 'DIVO-OWL' &&
         incoming().taskIds.size() == 0 &&
         incoming().createdAt == request.time &&
         incoming().updatedAt == request.time &&
-        !exists(workspaceDocPath(workspaceId)) &&
-        existsAfter(memberDocPath(workspaceId, request.auth.uid));
+        !exists(workspaceDocPath(workspaceId));
 
-      allow update: if isVerifiedUser() &&
-        isValidId(workspaceId) &&
+      allow update: if isPublicDivoWorkspace(workspaceId) &&
         isValidWorkspace(incoming()) &&
         incoming().id == existing().id &&
         incoming().ownerId == existing().ownerId &&
+        incoming().teamCode == existing().teamCode &&
         incoming().createdAt == existing().createdAt &&
         incoming().updatedAt == request.time &&
         (
           isAdmin() ||
-          // Action 1: Update weekly sync meeting date
-          (
-            isWorkspaceMember(workspaceId) &&
-            incoming().diff(existing()).affectedKeys().hasOnly([
-              'syncMeetingDate', 'updatedAt', 'updatedByUid'
-            ])
-          ) ||
-          // Action 2: Sync bounded taskIds index
-          (
-            isWorkspaceMember(workspaceId) &&
-            incoming().diff(existing()).affectedKeys().hasOnly([
-              'taskIds', 'updatedAt', 'updatedByUid'
-            ])
-          ) ||
-          // Action 3: Owner updates workspace metadata
+          // Action 1: Update weekly sync meeting date live
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'syncMeetingDate', 'updatedAt', 'updatedByUid'
+          ]) ||
+          // Action 2: Sync bounded taskIds index live
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'taskIds', 'updatedAt', 'updatedByUid'
+          ]) ||
+          // Action 3: Authenticated owner updates workspace display name
           (
             isWorkspaceOwner(workspaceId) &&
             incoming().diff(existing()).affectedKeys().hasOnly([
-              'name', 'teamCode', 'updatedAt', 'updatedByUid'
+              'name', 'updatedAt', 'updatedByUid'
             ])
           )
         );
@@ -250,36 +280,26 @@ service cloud.firestore {
       // =======================================================================
       match /members/{memberId} {
         allow get: if isVerifiedUser() &&
-          isValidId(workspaceId) &&
+          isPublicDivoWorkspace(workspaceId) &&
           isValidId(memberId) &&
           (request.auth.uid == memberId || isWorkspaceMember(workspaceId) || isAdmin());
 
         allow list: if false;
 
         allow create: if isVerifiedUser() &&
-          isValidId(workspaceId) &&
+          isPublicDivoWorkspace(workspaceId) &&
           isValidId(memberId) &&
           memberId == request.auth.uid &&
           isValidWorkspaceMember(incoming()) &&
           incoming().workspaceId == workspaceId &&
           incoming().joinedAt == request.time &&
           (
-            // Action A: Atomic initial workspace owner creation
-            (
-              !exists(workspaceDocPath(workspaceId)) &&
-              existsAfter(workspaceDocPath(workspaceId)) &&
-              getAfter(workspaceDocPath(workspaceId)).data.ownerId == request.auth.uid &&
-              incoming().role == 'owner' &&
-              incoming().teamCode == getAfter(workspaceDocPath(workspaceId)).data.teamCode
-            ) ||
-            // Action B: Bootstrapped admin joining workspace
             (
               isAdmin() &&
               exists(workspaceDocPath(workspaceId)) &&
               incoming().role == 'owner' &&
               incoming().teamCode == get(workspaceDocPath(workspaceId)).data.teamCode
             ) ||
-            // Action C: Collaborator joining existing workspace with valid teamCode
             (
               exists(workspaceDocPath(workspaceId)) &&
               incoming().role == 'collaborator' &&
@@ -288,7 +308,7 @@ service cloud.firestore {
           );
 
         allow update: if isVerifiedUser() &&
-          isValidId(workspaceId) &&
+          isPublicDivoWorkspace(workspaceId) &&
           isValidId(memberId) &&
           isValidWorkspaceMember(incoming()) &&
           incoming().uid == existing().uid &&
@@ -306,7 +326,7 @@ service cloud.firestore {
           );
 
         allow delete: if isVerifiedUser() &&
-          isValidId(workspaceId) &&
+          isPublicDivoWorkspace(workspaceId) &&
           isValidId(memberId) &&
           (isAdmin() || isWorkspaceOwner(workspaceId) || request.auth.uid == memberId);
       }
@@ -315,27 +335,25 @@ service cloud.firestore {
       // SUBCOLLECTION: /workspaces/{workspaceId}/tasks/{taskId}
       // =======================================================================
       match /tasks/{taskId} {
-        allow get: if isVerifiedUser() &&
-          isValidId(workspaceId) &&
+        allow get: if isPublicDivoWorkspace(workspaceId) &&
           isValidId(taskId) &&
-          (isWorkspaceMember(workspaceId) || isAdmin());
+          exists(workspaceDocPath(workspaceId));
 
         allow list: if false;
 
-        allow create: if isVerifiedUser() &&
-          isValidId(workspaceId) &&
+        allow create: if isPublicDivoWorkspace(workspaceId) &&
           isValidId(taskId) &&
           isValidOwlTask(incoming()) &&
           incoming().id == taskId &&
           incoming().workspaceId == workspaceId &&
-          incoming().createdByUid == request.auth.uid &&
+          isAuthorizedActor(incoming().createdByUid) &&
+          incoming().createdByUid == incoming().updatedByUid &&
           incoming().createdAt == request.time &&
           incoming().updatedAt == request.time &&
-          (isWorkspaceMember(workspaceId) || isAdmin()) &&
+          exists(workspaceDocPath(workspaceId)) &&
           (taskId in getAfter(workspaceDocPath(workspaceId)).data.taskIds);
 
-        allow update: if isVerifiedUser() &&
-          isValidId(workspaceId) &&
+        allow update: if isPublicDivoWorkspace(workspaceId) &&
           isValidId(taskId) &&
           isValidOwlTask(incoming()) &&
           incoming().id == existing().id &&
@@ -344,31 +362,61 @@ service cloud.firestore {
           incoming().createdDateLabel == existing().createdDateLabel &&
           incoming().createdAt == existing().createdAt &&
           incoming().updatedAt == request.time &&
+          exists(workspaceDocPath(workspaceId)) &&
           (existing().status != 'finalizado' || isAdmin()) &&
           (
             isAdmin() ||
-            // Tier 1 (Workspace Owner or Task Creator): Full non-terminal task update
-            (
-              (isWorkspaceOwner(workspaceId) || (isWorkspaceMember(workspaceId) && existing().createdByUid == request.auth.uid)) &&
-              incoming().diff(existing()).affectedKeys().hasOnly([
-                'title', 'requestedBy', 'module', 'priority', 'deadline',
-                'status', 'observations', 'specs', 'updatedByUid', 'updatedAt'
-              ])
-            ) ||
-            // Tier 2 (Collaborator / Lead Dev): Operational state & notes update only
-            (
-              isWorkspaceMember(workspaceId) &&
-              incoming().diff(existing()).affectedKeys().hasOnly([
-                'status', 'deadline', 'observations', 'specs', 'updatedByUid', 'updatedAt'
-              ])
-            )
+            // Action 1: Operational progress update (status, deadline, observations, specs)
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'status', 'deadline', 'observations', 'specs', 'updatedByUid', 'updatedAt'
+            ]) ||
+            // Action 2: Full non-terminal task fields update
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'title', 'requestedBy', 'module', 'priority', 'deadline',
+              'status', 'observations', 'specs', 'updatedByUid', 'updatedAt'
+            ])
           );
 
-        allow delete: if isVerifiedUser() &&
-          isValidId(workspaceId) &&
+        allow delete: if isPublicDivoWorkspace(workspaceId) &&
           isValidId(taskId) &&
-          (isAdmin() || isWorkspaceOwner(workspaceId)) &&
+          exists(workspaceDocPath(workspaceId)) &&
+          (existing().status != 'finalizado' || isAdmin()) &&
           !(taskId in getAfter(workspaceDocPath(workspaceId)).data.taskIds);
+      }
+
+      // =======================================================================
+      // SUBCOLLECTION: /workspaces/{workspaceId}/decisions/{decisionId}
+      // =======================================================================
+      match /decisions/{decisionId} {
+        allow get: if isPublicDivoWorkspace(workspaceId) &&
+          isValidDecisionId(decisionId) &&
+          exists(workspaceDocPath(workspaceId));
+
+        allow list: if false;
+
+        allow create: if isPublicDivoWorkspace(workspaceId) &&
+          isValidDecisionId(decisionId) &&
+          isValidDirectionDecision(incoming()) &&
+          incoming().id == decisionId &&
+          incoming().workspaceId == workspaceId &&
+          incoming().updatedAt == request.time &&
+          exists(workspaceDocPath(workspaceId));
+
+        allow update: if isPublicDivoWorkspace(workspaceId) &&
+          isValidDecisionId(decisionId) &&
+          isValidDirectionDecision(incoming()) &&
+          incoming().id == existing().id &&
+          incoming().workspaceId == existing().workspaceId &&
+          incoming().updatedAt == request.time &&
+          exists(workspaceDocPath(workspaceId)) &&
+          (
+            isAdmin() ||
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'text', 'resolved', 'updatedByUid', 'updatedAt'
+            ])
+          );
+
+        allow delete: if false;
       }
     }
   }

@@ -40,14 +40,14 @@
         },
         "ownerId": {
           "type": "string",
-          "description": "UID of the workspace creator/owner.",
+          "description": "Actor identifier of the workspace initializer.",
           "minLength": 1,
           "maxLength": 128,
           "pattern": "^[a-zA-Z0-9_\\-]+$"
         },
         "teamCode": {
           "type": "string",
-          "description": "Shared access code required for collaborators to join this workspace.",
+          "description": "Shared access code for the DIVO workspace.",
           "minLength": 4,
           "maxLength": 32,
           "pattern": "^[a-zA-Z0-9_\\-]+$"
@@ -75,7 +75,7 @@
         },
         "updatedByUid": {
           "type": "string",
-          "description": "UID of the authenticated member who performed the latest update.",
+          "description": "Authorized actor ID who performed the latest update.",
           "minLength": 1,
           "maxLength": 128,
           "pattern": "^[a-zA-Z0-9_\\-]+$"
@@ -95,7 +95,7 @@
     },
     "WorkspaceMember": {
       "title": "WorkspaceMember",
-      "description": "Relational membership document authorizing access to a Workspace without storing PII.",
+      "description": "Optional authenticated membership document without PII.",
       "type": "object",
       "properties": {
         "uid": {
@@ -142,7 +142,7 @@
     },
     "OwlTask": {
       "title": "OwlTask",
-      "description": "Development requirement or sprint task for the DIVO Owl System board.",
+      "description": "Development requirement, new field, or report task for the DIVO Owl System live board.",
       "type": "object",
       "properties": {
         "id": {
@@ -154,7 +154,7 @@
         },
         "workspaceId": {
           "type": "string",
-          "description": "Parent workspace identifier.",
+          "description": "Parent workspace identifier (divo-owl).",
           "minLength": 1,
           "maxLength": 128,
           "pattern": "^[a-zA-Z0-9_\\-]+$"
@@ -174,7 +174,7 @@
         },
         "module": {
           "type": "string",
-          "description": "Owl System module impacted by the task.",
+          "description": "Owl or Sly Soft module impacted by the task.",
           "minLength": 1,
           "maxLength": 100
         },
@@ -220,14 +220,14 @@
         },
         "createdByUid": {
           "type": "string",
-          "description": "Immutable UID of the user who created the task.",
+          "description": "Immutable actor ID who created the task.",
           "minLength": 1,
           "maxLength": 128,
           "pattern": "^[a-zA-Z0-9_\\-]+$"
         },
         "updatedByUid": {
           "type": "string",
-          "description": "UID of the user who performed the latest update.",
+          "description": "Authorized actor ID who performed the latest update.",
           "minLength": 1,
           "maxLength": 128,
           "pattern": "^[a-zA-Z0-9_\\-]+$"
@@ -260,6 +260,51 @@
         "createdAt",
         "updatedAt"
       ]
+    },
+    "DirectionDecision": {
+      "title": "DirectionDecision",
+      "description": "Executive resolution for one of the 4 strategic Direction pending points.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Deterministic pending decision ID (dir-pending-1 to dir-pending-4).",
+          "enum": ["dir-pending-1", "dir-pending-2", "dir-pending-3", "dir-pending-4"],
+          "minLength": 13,
+          "maxLength": 13,
+          "pattern": "^dir-pending-[1-4]$"
+        },
+        "workspaceId": {
+          "type": "string",
+          "description": "Parent workspace identifier (divo-owl).",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "text": {
+          "type": "string",
+          "description": "Executive criterion or definition text.",
+          "minLength": 1,
+          "maxLength": 1500
+        },
+        "resolved": {
+          "type": "boolean",
+          "description": "Whether Direction has confirmed and applied this definition."
+        },
+        "updatedByUid": {
+          "type": "string",
+          "description": "Authorized actor ID who performed the latest update.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of latest update."
+        }
+      },
+      "required": ["id", "workspaceId", "text", "resolved", "updatedByUid", "updatedAt"]
     }
   },
   "firestore": {
@@ -269,15 +314,19 @@
     },
     "/workspaces/{workspaceId}": {
       "schema": { "$ref": "#/entities/Workspace" },
-      "description": "Singleton workspace configuration and bounded task ID index for DIVO."
+      "description": "Singleton live workspace configuration and bounded task ID index for DIVO."
     },
     "/workspaces/{workspaceId}/members/{memberId}": {
       "schema": { "$ref": "#/entities/WorkspaceMember" },
-      "description": "Subcollection of authorized DIVO workspace members."
+      "description": "Subcollection of optional authenticated DIVO workspace members."
     },
     "/workspaces/{workspaceId}/tasks/{taskId}": {
       "schema": { "$ref": "#/entities/OwlTask" },
-      "description": "Subcollection of Owl System requirements and sprint tasks."
+      "description": "Subcollection of Owl System requirements, new fields, and report tasks."
+    },
+    "/workspaces/{workspaceId}/decisions/{decisionId}": {
+      "schema": { "$ref": "#/entities/DirectionDecision" },
+      "description": "Subcollection of the 4 executive Direction pending resolutions."
     }
   }
 }
