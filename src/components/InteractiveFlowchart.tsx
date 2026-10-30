@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   FLOW_NODES, 
   TEAM_MEMBERS, 
@@ -45,6 +45,7 @@ export const InteractiveFlowchart: React.FC<InteractiveFlowchartProps> = ({
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterResponsible, setFilterResponsible] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'flow' | 'grid'>('flow');
+  const inspectorRef = useRef<HTMLDivElement>(null);
 
   const activeId = externalSelectedNodeId || internalSelectedId;
   const activeNode = FLOW_NODES.find(n => n.id === activeId) || FLOW_NODES[0];
@@ -52,6 +53,11 @@ export const InteractiveFlowchart: React.FC<InteractiveFlowchartProps> = ({
   const handleNodeClick = (id: string) => {
     setInternalSelectedId(id);
     if (onSelectNode) onSelectNode(id);
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      setTimeout(() => {
+        inspectorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 60);
+    }
   };
 
   const getIcon = (name: string, className = "w-4 h-4") => {
@@ -112,9 +118,9 @@ export const InteractiveFlowchart: React.FC<InteractiveFlowchartProps> = ({
   return (
     <div className="space-y-6">
       {/* Top Controls & Strategic Summary */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-4 rounded-2xl bg-neutral-900/60 border border-neutral-800 shadow-xl">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl bg-neutral-900/60 border border-neutral-800 shadow-xl">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <h2 className="font-serif text-xl sm:text-2xl text-amber-100 font-semibold tracking-wide">
               Flujograma Integral de Operaciones DIVO
             </h2>
@@ -128,13 +134,13 @@ export const InteractiveFlowchart: React.FC<InteractiveFlowchartProps> = ({
         </div>
 
         {/* View toggles & filters */}
-        <div className="flex flex-wrap items-center gap-2.5">
-          <div className="flex items-center gap-1 bg-neutral-950 p-1 rounded-xl border border-neutral-800 text-xs">
-            <span className="text-neutral-500 px-2 font-medium">Filtrar:</span>
+        <div className="grid grid-cols-1 sm:flex sm:flex-wrap items-stretch sm:items-center gap-2.5 w-full lg:w-auto">
+          <div className="flex items-center justify-between sm:justify-start gap-1.5 bg-neutral-950 px-2.5 py-1.5 min-h-[40px] rounded-xl border border-neutral-800 text-xs w-full sm:w-auto">
+            <span className="text-neutral-500 font-medium shrink-0">Filtrar:</span>
             <select
               value={filterCategory}
               onChange={(e) => setFilterCategory(e.target.value)}
-              className="bg-transparent text-neutral-200 focus:outline-none cursor-pointer pr-2 text-xs"
+              className="bg-transparent text-neutral-200 focus:outline-none cursor-pointer pr-1 text-xs flex-1 sm:flex-initial"
             >
               <option value="all" className="bg-neutral-900 text-neutral-100">Todas las fases</option>
               <option value="paid" className="bg-neutral-900 text-neutral-100">Tráfico Pago</option>
@@ -146,12 +152,12 @@ export const InteractiveFlowchart: React.FC<InteractiveFlowchartProps> = ({
             </select>
           </div>
 
-          <div className="flex items-center gap-1 bg-neutral-950 p-1 rounded-xl border border-neutral-800 text-xs">
-            <span className="text-neutral-500 px-2 font-medium">Responsable:</span>
+          <div className="flex items-center justify-between sm:justify-start gap-1.5 bg-neutral-950 px-2.5 py-1.5 min-h-[40px] rounded-xl border border-neutral-800 text-xs w-full sm:w-auto">
+            <span className="text-neutral-500 font-medium shrink-0">Responsable:</span>
             <select
               value={filterResponsible}
               onChange={(e) => setFilterResponsible(e.target.value)}
-              className="bg-transparent text-neutral-200 focus:outline-none cursor-pointer pr-2 text-xs"
+              className="bg-transparent text-neutral-200 focus:outline-none cursor-pointer pr-1 text-xs flex-1 sm:flex-initial"
             >
               <option value="all" className="bg-neutral-900 text-neutral-100">Todo el equipo</option>
               <option value="Coty" className="bg-neutral-900 text-neutral-100">Coty</option>
@@ -164,10 +170,10 @@ export const InteractiveFlowchart: React.FC<InteractiveFlowchartProps> = ({
             </select>
           </div>
 
-          <div className="flex rounded-xl bg-neutral-950 p-1 border border-neutral-800">
+          <div className="grid grid-cols-2 sm:flex rounded-xl bg-neutral-950 p-1 border border-neutral-800 w-full sm:w-auto">
             <button
               onClick={() => setViewMode('flow')}
-              className={`px-3 py-1 rounded-lg text-xs font-medium cursor-pointer transition-colors ${
+              className={`px-3 py-1.5 min-h-[36px] rounded-lg text-xs font-medium cursor-pointer transition-colors ${
                 viewMode === 'flow' ? 'bg-amber-500/20 text-amber-200' : 'text-neutral-400 hover:text-white'
               }`}
             >
@@ -175,7 +181,7 @@ export const InteractiveFlowchart: React.FC<InteractiveFlowchartProps> = ({
             </button>
             <button
               onClick={() => setViewMode('grid')}
-              className={`px-3 py-1 rounded-lg text-xs font-medium cursor-pointer transition-colors ${
+              className={`px-3 py-1.5 min-h-[36px] rounded-lg text-xs font-medium cursor-pointer transition-colors ${
                 viewMode === 'grid' ? 'bg-amber-500/20 text-amber-200' : 'text-neutral-400 hover:text-white'
               }`}
             >
@@ -197,14 +203,14 @@ export const InteractiveFlowchart: React.FC<InteractiveFlowchartProps> = ({
               {/* STAGE 1: TRÁFICO Y ADQUISICIÓN (PAGO & ORGÁNICO) */}
               <div className="p-4 sm:p-5 rounded-2xl bg-neutral-900/40 border border-neutral-800/80 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-4">
                   <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-                    <h3 className="font-serif text-lg font-semibold text-neutral-200">
+                    <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse shrink-0" />
+                    <h3 className="font-serif text-base sm:text-lg font-semibold text-neutral-200">
                       1. Fuentes de Adquisición (Campañas Pagas & Tráfico Orgánico)
                     </h3>
                   </div>
-                  <span className="text-xs text-neutral-400 font-mono">Paso 1: Atracción</span>
+                  <span className="text-xs text-neutral-400 font-mono pl-4 sm:pl-0">Paso 1: Atracción</span>
                 </div>
 
                 {/* Sub-block Paid */}
@@ -247,23 +253,23 @@ export const InteractiveFlowchart: React.FC<InteractiveFlowchartProps> = ({
               </div>
 
               {/* FLOW ARROW CONNECTOR */}
-              <div className="flex items-center justify-center -my-3 relative z-10">
-                <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-neutral-900 border border-amber-500/40 text-amber-300 text-xs font-semibold shadow-lg shadow-black">
+              <div className="flex items-center justify-center -my-3 relative z-10 px-2">
+                <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-neutral-900 border border-amber-500/40 text-amber-300 text-[11px] sm:text-xs font-semibold shadow-lg shadow-black text-center">
                   <span>Tráfico Calificado & Consultas Inmediatas</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <ArrowRight className="w-3.5 h-3.5 shrink-0" />
                 </div>
               </div>
 
               {/* STAGE 2: NÚCLEO WEB & CANAL EMMA */}
               <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-b from-amber-950/20 to-neutral-900/60 border border-amber-500/30 relative shadow-xl shadow-amber-500/5">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-4">
                   <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-md shadow-amber-400/50" />
-                    <h3 className="font-serif text-lg font-semibold text-amber-100">
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-md shadow-amber-400/50 shrink-0" />
+                    <h3 className="font-serif text-base sm:text-lg font-semibold text-amber-100">
                       2. Núcleo Web & Contacto Central (El Templo Digital)
                     </h3>
                   </div>
-                  <span className="text-xs text-amber-300 font-mono font-medium">Bifurcación: Trajes & Vestidos</span>
+                  <span className="text-xs text-amber-300 font-mono font-medium pl-4 sm:pl-0">Bifurcación: Trajes & Vestidos</span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -280,8 +286,8 @@ export const InteractiveFlowchart: React.FC<InteractiveFlowchartProps> = ({
                 </div>
 
                 {/* Visual Branching Hint */}
-                <div className="mt-4 p-3 rounded-xl bg-neutral-950/70 border border-amber-500/20 text-xs text-neutral-300 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+                <div className="mt-4 p-3 rounded-xl bg-neutral-950/70 border border-amber-500/20 text-xs text-neutral-300 flex items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                     <span className="font-serif text-amber-300 font-semibold">WEB DIVO:</span>
                     <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-200 border border-amber-500/30">
                       👔 Línea Trajes (Sartorial / Egresados / Novios)
@@ -290,28 +296,28 @@ export const InteractiveFlowchart: React.FC<InteractiveFlowchartProps> = ({
                       👗 Línea Vestidos (Novias / Gala / Madrinas)
                     </span>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-amber-400 hidden sm:block" />
+                  <ChevronRight className="w-4 h-4 text-amber-400 hidden sm:block shrink-0" />
                 </div>
               </div>
 
               {/* FLOW ARROW CONNECTOR */}
-              <div className="flex items-center justify-center -my-3 relative z-10">
-                <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-neutral-900 border border-purple-500/40 text-purple-300 text-xs font-semibold shadow-lg shadow-black">
+              <div className="flex items-center justify-center -my-3 relative z-10 px-2">
+                <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-neutral-900 border border-purple-500/40 text-purple-300 text-[11px] sm:text-xs font-semibold shadow-lg shadow-black text-center">
                   <span>Enrutamiento Automático & Gestión de Leads</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <ArrowRight className="w-3.5 h-3.5 shrink-0" />
                 </div>
               </div>
 
               {/* STAGE 3: CRM & SISTEMAS (KOMMO, OWL, SKYSOFT) */}
               <div className="p-4 sm:p-5 rounded-2xl bg-neutral-900/40 border border-purple-900/40 relative">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-4">
                   <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-purple-400" />
-                    <h3 className="font-serif text-lg font-semibold text-neutral-200">
+                    <span className="w-2 h-2 rounded-full bg-purple-400 shrink-0" />
+                    <h3 className="font-serif text-base sm:text-lg font-semibold text-neutral-200">
                       3. Motores de Seguimiento, Medidas & ERP (Kommo · Owl · SkySoft)
                     </h3>
                   </div>
-                  <span className="text-xs text-purple-300 font-mono">Paso 3: Conversación y Control</span>
+                  <span className="text-xs text-purple-300 font-mono pl-4 sm:pl-0">Paso 3: Conversación y Control</span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -328,23 +334,23 @@ export const InteractiveFlowchart: React.FC<InteractiveFlowchartProps> = ({
               </div>
 
               {/* FLOW ARROW CONNECTOR */}
-              <div className="flex items-center justify-center -my-3 relative z-10">
-                <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-neutral-900 border border-rose-500/40 text-rose-300 text-xs font-semibold shadow-lg shadow-black">
+              <div className="flex items-center justify-center -my-3 relative z-10 px-2">
+                <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-neutral-900 border border-rose-500/40 text-rose-300 text-[11px] sm:text-xs font-semibold shadow-lg shadow-black text-center">
                   <span>Asignación de Cita con Asesora en Atelier</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <ArrowRight className="w-3.5 h-3.5 shrink-0" />
                 </div>
               </div>
 
               {/* STAGE 4 & 5: SUCURSALES FÍSICAS & POST-VENTA */}
               <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-b from-neutral-900/40 to-neutral-950 border border-neutral-800 relative">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-4">
                   <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-rose-400" />
-                    <h3 className="font-serif text-lg font-semibold text-neutral-200">
+                    <span className="w-2 h-2 rounded-full bg-rose-400 shrink-0" />
+                    <h3 className="font-serif text-base sm:text-lg font-semibold text-neutral-200">
                       4. Red de Ateliers Presenciales & Post-Venta ("Gestión Propia")
                     </h3>
                   </div>
-                  <span className="text-xs text-rose-300 font-mono">Paso 4: Experiencia y Retención</span>
+                  <span className="text-xs text-rose-300 font-mono pl-4 sm:pl-0">Paso 4: Experiencia y Retención</span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
@@ -361,13 +367,13 @@ export const InteractiveFlowchart: React.FC<InteractiveFlowchartProps> = ({
 
                 {/* Sub-branches list */}
                 <div className="p-3.5 rounded-xl bg-neutral-950/80 border border-neutral-800 text-xs">
-                  <div className="font-medium text-neutral-300 mb-2 flex items-center justify-between">
+                  <div className="font-medium text-neutral-300 mb-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                     <span>Ateliers Identificados en el Boceto de Coty:</span>
                     <span className="text-[11px] text-amber-400">Total: 5 Puntos de Atención</span>
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
                     {BRANCH_LOCATIONS.map(b => (
-                      <div key={b.id} className="p-2 rounded-lg bg-neutral-900/90 border border-neutral-800 flex flex-col justify-between">
+                      <div key={b.id} className="p-2.5 rounded-lg bg-neutral-900/90 border border-neutral-800 flex flex-col justify-between">
                         <span className="font-serif font-bold text-amber-200 text-sm">{b.code}</span>
                         <span className="text-[11px] text-neutral-400 truncate">{b.name}</span>
                         <span className="text-[9px] text-neutral-500 mt-1">{b.specialty}</span>
@@ -395,20 +401,24 @@ export const InteractiveFlowchart: React.FC<InteractiveFlowchartProps> = ({
 
         </div>
 
-        {/* Right Column: Node Inspector Drawer (Sticky, detailed & actionable) */}
-        <div className="lg:col-span-5 xl:col-span-4 sticky top-24">
-          <div className="rounded-2xl bg-neutral-900/90 border border-amber-500/30 p-5 shadow-2xl backdrop-blur-md space-y-5">
+        {/* Right Column: Node Inspector Drawer (Sticky on desktop, smooth scroll target on mobile) */}
+        <div
+          ref={inspectorRef}
+          id="flowchart-node-inspector"
+          className="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-24 scroll-mt-20"
+        >
+          <div className="rounded-2xl bg-neutral-900/90 border border-amber-500/30 p-4 sm:p-5 shadow-2xl backdrop-blur-md space-y-5">
             
             {/* Header of Inspector */}
             <div>
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                 {getCategoryBadge(activeNode.category)}
                 <span className="text-[11px] font-mono text-neutral-400">
                   ID: {activeNode.id}
                 </span>
               </div>
               <div className="flex items-start gap-3">
-                <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-300 border border-amber-500/30 mt-0.5">
+                <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-300 border border-amber-500/30 mt-0.5 shrink-0">
                   {getIcon(activeNode.iconName, "w-5 h-5")}
                 </div>
                 <div>
@@ -468,25 +478,25 @@ export const InteractiveFlowchart: React.FC<InteractiveFlowchartProps> = ({
             )}
 
             {/* Inputs & Outputs */}
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="p-2.5 rounded-xl bg-neutral-950/80 border border-neutral-800">
-                <span className="text-[10px] uppercase font-semibold text-blue-400 block mb-1">Entradas (Inputs)</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+              <div className="p-3 rounded-xl bg-neutral-950/80 border border-neutral-800">
+                <span className="text-[10px] uppercase font-semibold text-blue-400 block mb-1.5">Entradas (Inputs)</span>
                 <ul className="space-y-1 text-neutral-300 text-[11px]">
                   {activeNode.inputs.map((inp, idx) => (
-                    <li key={idx} className="flex items-center gap-1">
-                      <span className="w-1 h-1 rounded-full bg-blue-400 shrink-0" />
-                      <span className="truncate">{inp}</span>
+                    <li key={idx} className="flex items-start gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0 mt-1.5" />
+                      <span className="break-words">{inp}</span>
                     </li>
                   ))}
                 </ul>
               </div>
-              <div className="p-2.5 rounded-xl bg-neutral-950/80 border border-neutral-800">
-                <span className="text-[10px] uppercase font-semibold text-emerald-400 block mb-1">Salidas (Outputs)</span>
+              <div className="p-3 rounded-xl bg-neutral-950/80 border border-neutral-800">
+                <span className="text-[10px] uppercase font-semibold text-emerald-400 block mb-1.5">Salidas (Outputs)</span>
                 <ul className="space-y-1 text-neutral-300 text-[11px]">
                   {activeNode.outputs.map((out, idx) => (
-                    <li key={idx} className="flex items-center gap-1">
-                      <span className="w-1 h-1 rounded-full bg-emerald-400 shrink-0" />
-                      <span className="truncate">{out}</span>
+                    <li key={idx} className="flex items-start gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0 mt-1.5" />
+                      <span className="break-words">{out}</span>
                     </li>
                   ))}
                 </ul>

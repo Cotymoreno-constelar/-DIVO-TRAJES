@@ -173,13 +173,13 @@ export const UXWritingLaboratory: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       {/* Intro Header */}
-      <div className="p-6 rounded-2xl bg-neutral-900/60 border border-neutral-800 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-xl">
+      <div className="p-4 sm:p-6 rounded-2xl bg-neutral-900/60 border border-neutral-800 flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6 shadow-xl">
         <div className="max-w-2xl">
           <div className="flex items-center gap-2 mb-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-            <h2 className="font-serif text-2xl sm:text-3xl font-semibold text-amber-100">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0" />
+            <h2 className="font-serif text-xl sm:text-3xl font-semibold text-amber-100">
               Laboratorio de UX Writing & Voz de Marca DIVO
             </h2>
           </div>
@@ -188,7 +188,7 @@ export const UXWritingLaboratory: React.FC = () => {
           </p>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-neutral-950 border border-neutral-800 text-xs text-neutral-400 space-y-1">
+        <div className="p-3.5 rounded-xl bg-neutral-950 border border-neutral-800 text-xs text-neutral-400 space-y-1 shrink-0">
           <span className="font-semibold text-amber-300 block">Los 3 Pilares del Tono:</span>
           <p>1. <strong className="text-neutral-200">Luz:</strong> Eleva la autoestima de quien lee.</p>
           <p>2. <strong className="text-neutral-200">Expansión:</strong> Hace sentir grande y festivo el momento.</p>
@@ -197,11 +197,11 @@ export const UXWritingLaboratory: React.FC = () => {
       </div>
 
       {/* Dynamic Copy Generator Widget for Coty */}
-      <div className="p-6 rounded-2xl bg-gradient-to-br from-amber-950/30 via-neutral-900 to-neutral-950 border border-amber-500/40 shadow-2xl space-y-4">
-        <div className="flex items-center justify-between">
+      <div className="p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-amber-950/30 via-neutral-900 to-neutral-950 border border-amber-500/40 shadow-2xl space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-1.5">
           <div className="flex items-center gap-2">
-            <Zap className="w-4 h-4 text-amber-400" />
-            <h3 className="font-serif text-lg font-bold text-amber-200">
+            <Zap className="w-4 h-4 text-amber-400 shrink-0" />
+            <h3 className="font-serif text-base sm:text-lg font-bold text-amber-200">
               Generador Rápido de Copys para Coty & Equipo
             </h3>
           </div>
@@ -219,7 +219,7 @@ export const UXWritingLaboratory: React.FC = () => {
             <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-neutral-950 border border-neutral-800">
               <button
                 onClick={() => setGenPrenda('vestido')}
-                className={`py-1.5 rounded-lg font-medium transition-colors cursor-pointer ${
+                className={`py-2 min-h-[38px] rounded-lg font-medium transition-colors cursor-pointer ${
                   genPrenda === 'vestido' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' : 'text-neutral-400 hover:text-white'
                 }`}
               >
@@ -227,7 +227,7 @@ export const UXWritingLaboratory: React.FC = () => {
               </button>
               <button
                 onClick={() => setGenPrenda('traje')}
-                className={`py-1.5 rounded-lg font-medium transition-colors cursor-pointer ${
+                className={`py-2 min-h-[38px] rounded-lg font-medium transition-colors cursor-pointer ${
                   genPrenda === 'traje' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : 'text-neutral-400 hover:text-white'
                 }`}
               >
@@ -243,7 +243,7 @@ export const UXWritingLaboratory: React.FC = () => {
             <div className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-neutral-950 border border-neutral-800">
               <button
                 onClick={() => setGenOcasion('novia')}
-                className={`py-1.5 rounded-lg font-medium text-[11px] transition-colors cursor-pointer ${
+                className={`py-2 min-h-[38px] rounded-lg font-medium text-[11px] transition-colors cursor-pointer ${
                   genOcasion === 'novia' ? 'bg-amber-500/20 text-amber-200 border border-amber-500/30' : 'text-neutral-400 hover:text-white'
                 }`}
               >
@@ -251,7 +251,7 @@ export const UXWritingLaboratory: React.FC = () => {
               </button>
               <button
                 onClick={() => setGenOcasion('egreso')}
-                className={`py-1.5 rounded-lg font-medium text-[11px] transition-colors cursor-pointer ${
+                className={`py-2 min-h-[38px] rounded-lg font-medium text-[11px] transition-colors cursor-pointer ${
                   genOcasion === 'egreso' ? 'bg-amber-500/20 text-amber-200 border border-amber-500/30' : 'text-neutral-400 hover:text-white'
                 }`}
               >
@@ -259,7 +259,7 @@ export const UXWritingLaboratory: React.FC = () => {
               </button>
               <button
                 onClick={() => setGenOcasion('gala')}
-                className={`py-1.5 rounded-lg font-medium text-[11px] transition-colors cursor-pointer ${
+                className={`py-2 min-h-[38px] rounded-lg font-medium text-[11px] transition-colors cursor-pointer ${
                   genOcasion === 'gala' ? 'bg-amber-500/20 text-amber-200 border border-amber-500/30' : 'text-neutral-400 hover:text-white'
                 }`}
               >
@@ -275,7 +275,7 @@ export const UXWritingLaboratory: React.FC = () => {
             <div className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-neutral-950 border border-neutral-800">
               <button
                 onClick={() => setGenCanal('web')}
-                className={`py-1.5 rounded-lg font-medium text-[11px] transition-colors cursor-pointer ${
+                className={`py-2 min-h-[38px] rounded-lg font-medium text-[11px] transition-colors cursor-pointer ${
                   genCanal === 'web' ? 'bg-amber-500/20 text-amber-200 border border-amber-500/30' : 'text-neutral-400 hover:text-white'
                 }`}
               >
@@ -283,7 +283,7 @@ export const UXWritingLaboratory: React.FC = () => {
               </button>
               <button
                 onClick={() => setGenCanal('whatsapp')}
-                className={`py-1.5 rounded-lg font-medium text-[11px] transition-colors cursor-pointer ${
+                className={`py-2 min-h-[38px] rounded-lg font-medium text-[11px] transition-colors cursor-pointer ${
                   genCanal === 'whatsapp' ? 'bg-amber-500/20 text-amber-200 border border-amber-500/30' : 'text-neutral-400 hover:text-white'
                 }`}
               >
@@ -291,7 +291,7 @@ export const UXWritingLaboratory: React.FC = () => {
               </button>
               <button
                 onClick={() => setGenCanal('instagram')}
-                className={`py-1.5 rounded-lg font-medium text-[11px] transition-colors cursor-pointer ${
+                className={`py-2 min-h-[38px] rounded-lg font-medium text-[11px] transition-colors cursor-pointer ${
                   genCanal === 'instagram' ? 'bg-amber-500/20 text-amber-200 border border-amber-500/30' : 'text-neutral-400 hover:text-white'
                 }`}
               >
@@ -305,8 +305,8 @@ export const UXWritingLaboratory: React.FC = () => {
         <div className="p-4 rounded-xl bg-neutral-950 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <span className="text-[10px] uppercase font-semibold text-amber-400 flex items-center gap-1">
-              <Sparkles className="w-3 h-3" />
-              Propuesta Generada para {genPrenda.toUpperCase()} · {genOcasion.toUpperCase()} ({genCanal.toUpperCase()}):
+              <Sparkles className="w-3 h-3 shrink-0" />
+              <span>Propuesta Generada para {genPrenda.toUpperCase()} · {genOcasion.toUpperCase()} ({genCanal.toUpperCase()}):</span>
             </span>
             <p className="font-serif text-base text-neutral-100 italic leading-relaxed">
               "{getDynamicCustomCopy()}"
@@ -315,7 +315,7 @@ export const UXWritingLaboratory: React.FC = () => {
 
           <button
             onClick={() => handleCopy('dynamic', getDynamicCustomCopy())}
-            className="px-4 py-2 rounded-xl bg-amber-500/20 text-amber-200 border border-amber-400/40 text-xs font-semibold hover:bg-amber-500/30 transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
+            className="w-full sm:w-auto px-4 py-2.5 min-h-[42px] rounded-xl bg-amber-500/20 text-amber-200 border border-amber-400/40 text-xs font-semibold hover:bg-amber-500/30 transition-all flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
           >
             {copiedId === 'dynamic' ? (
               <>
@@ -333,10 +333,10 @@ export const UXWritingLaboratory: React.FC = () => {
       </div>
 
       {/* Filter Tabs for Library */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-neutral-800 pb-3 text-xs">
+      <div className="flex items-center gap-2 border-b border-neutral-800 pb-3 text-xs overflow-x-auto scrollbar-none sm:flex-wrap">
         <button
           onClick={() => setSelectedCategory('all')}
-          className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
+          className={`px-3.5 py-2 min-h-[38px] rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
             selectedCategory === 'all' ? 'bg-amber-500/20 text-amber-200 border border-amber-400/30 font-medium' : 'text-neutral-400 hover:text-white'
           }`}
         >
@@ -344,7 +344,7 @@ export const UXWritingLaboratory: React.FC = () => {
         </button>
         <button
           onClick={() => setSelectedCategory('web-hero')}
-          className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
+          className={`px-3.5 py-2 min-h-[38px] rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
             selectedCategory === 'web-hero' ? 'bg-amber-500/20 text-amber-200 border border-amber-400/30 font-medium' : 'text-neutral-400 hover:text-white'
           }`}
         >
@@ -352,7 +352,7 @@ export const UXWritingLaboratory: React.FC = () => {
         </button>
         <button
           onClick={() => setSelectedCategory('whatsapp-kommo')}
-          className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
+          className={`px-3.5 py-2 min-h-[38px] rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
             selectedCategory === 'whatsapp-kommo' ? 'bg-amber-500/20 text-amber-200 border border-amber-400/30 font-medium' : 'text-neutral-400 hover:text-white'
           }`}
         >
@@ -360,7 +360,7 @@ export const UXWritingLaboratory: React.FC = () => {
         </button>
         <button
           onClick={() => setSelectedCategory('ads')}
-          className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
+          className={`px-3.5 py-2 min-h-[38px] rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
             selectedCategory === 'ads' ? 'bg-amber-500/20 text-amber-200 border border-amber-400/30 font-medium' : 'text-neutral-400 hover:text-white'
           }`}
         >
@@ -368,7 +368,7 @@ export const UXWritingLaboratory: React.FC = () => {
         </button>
         <button
           onClick={() => setSelectedCategory('daniela-grupos')}
-          className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
+          className={`px-3.5 py-2 min-h-[38px] rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
             selectedCategory === 'daniela-grupos' ? 'bg-amber-500/20 text-amber-200 border border-amber-400/30 font-medium' : 'text-neutral-400 hover:text-white'
           }`}
         >
@@ -376,7 +376,7 @@ export const UXWritingLaboratory: React.FC = () => {
         </button>
         <button
           onClick={() => setSelectedCategory('post-sale')}
-          className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
+          className={`px-3.5 py-2 min-h-[38px] rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
             selectedCategory === 'post-sale' ? 'bg-amber-500/20 text-amber-200 border border-amber-400/30 font-medium' : 'text-neutral-400 hover:text-white'
           }`}
         >
@@ -389,10 +389,10 @@ export const UXWritingLaboratory: React.FC = () => {
         {filteredCopys.map((sample) => (
           <div
             key={sample.id}
-            className="p-5 rounded-2xl bg-neutral-900/60 border border-neutral-800 hover:border-neutral-700 transition-all flex flex-col justify-between gap-4"
+            className="p-4 sm:p-5 rounded-2xl bg-neutral-900/60 border border-neutral-800 hover:border-neutral-700 transition-all flex flex-col justify-between gap-4"
           >
             <div>
-              <div className="flex items-center justify-between text-xs mb-2">
+              <div className="flex flex-wrap items-start justify-between gap-1.5 text-xs mb-2">
                 <span className="font-serif font-bold text-amber-200 text-sm">
                   {sample.title}
                 </span>
@@ -411,14 +411,14 @@ export const UXWritingLaboratory: React.FC = () => {
               </div>
             </div>
 
-            <div className="pt-3 border-t border-neutral-800/80 flex items-center justify-between text-xs">
-              <span className="text-[11px] text-neutral-400 max-w-xs">
+            <div className="pt-3 border-t border-neutral-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+              <span className="text-[11px] text-neutral-400 sm:max-w-xs">
                 💡 <strong className="text-neutral-300">Por qué funciona:</strong> {sample.whyItWorks}
               </span>
 
               <button
                 onClick={() => handleCopy(sample.id, sample.copyText)}
-                className="px-3 py-1.5 rounded-lg bg-neutral-800 text-neutral-200 hover:text-amber-200 hover:bg-neutral-700 transition-colors flex items-center gap-1.5 text-xs cursor-pointer shrink-0"
+                className="w-full sm:w-auto px-3.5 py-2 min-h-[40px] rounded-lg bg-neutral-800 text-neutral-200 hover:text-amber-200 hover:bg-neutral-700 transition-colors flex items-center justify-center gap-1.5 text-xs cursor-pointer shrink-0"
               >
                 {copiedId === sample.id ? (
                   <>

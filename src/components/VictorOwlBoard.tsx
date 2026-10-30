@@ -270,12 +270,12 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
   };
 
   return (
-    <div className="space-y-8 relative">
+    <div className="space-y-6 sm:space-y-8 relative">
 
       {/* Floating Toast Alert */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-cyan-950/95 text-cyan-200 border border-cyan-400 px-4 py-2.5 rounded-2xl shadow-2xl backdrop-blur-md text-xs font-semibold flex items-center gap-2 no-print">
-          <CheckCircle2 className="w-4 h-4 text-cyan-300" />
+        <div className="fixed bottom-4 left-3 right-3 sm:left-auto sm:bottom-6 sm:right-6 z-50 bg-cyan-950/95 text-cyan-200 border border-cyan-400 px-4 py-3 rounded-2xl shadow-2xl backdrop-blur-md text-xs font-semibold flex items-center gap-2 no-print">
+          <CheckCircle2 className="w-4 h-4 text-cyan-300 shrink-0" />
           <span>{toastMessage}</span>
         </div>
       )}
@@ -289,15 +289,15 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
       {activeSection === 'board' && (
         <>
           {/* Victor Hero & System Owl Banner */}
-          <div className="p-6 rounded-3xl bg-gradient-to-r from-neutral-900 via-neutral-900/90 to-cyan-950/35 border border-cyan-500/30 shadow-2xl relative overflow-hidden">
+          <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-neutral-900 via-neutral-900/90 to-cyan-950/35 border border-cyan-500/30 shadow-2xl relative overflow-hidden">
             <div className="absolute top-0 right-0 w-80 h-80 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
             
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 sm:gap-6 relative z-10">
               
               {/* Profile & Context */}
-              <div className="flex items-start gap-4">
+              <div className="flex items-start gap-3.5 sm:gap-4">
                 <div className="relative shrink-0">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-400 via-blue-500 to-indigo-600 flex items-center justify-center text-neutral-950 font-serif font-bold text-2xl shadow-xl shadow-cyan-500/20 ring-2 ring-cyan-300/40">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-cyan-400 via-blue-500 to-indigo-600 flex items-center justify-center text-neutral-950 font-serif font-bold text-xl sm:text-2xl shadow-xl shadow-cyan-500/20 ring-2 ring-cyan-300/40">
                     V
                   </div>
                   <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-neutral-900" title="Activo en el sistema Owl" />
@@ -305,15 +305,15 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
 
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h2 className="font-serif text-2xl sm:text-3xl font-bold text-neutral-100">
+                    <h2 className="font-serif text-xl sm:text-3xl font-bold text-neutral-100">
                       Gestión de Requerimientos · Sistema Owl
                     </h2>
-                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 font-mono">
+                    <span className="text-[11px] sm:text-xs px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 font-mono">
                       Víctor · Lead Dev
                     </span>
                   </div>
                   <p className="text-xs sm:text-sm text-neutral-300 max-w-2xl leading-relaxed">
-                    Control centralizado de avances del sistema **Owl** para **Coty** y **Yasmín**. Todas las fechas límite, estados y observaciones técnicas se editan en tiempo real.
+                    Control centralizado de avances del sistema <strong className="text-neutral-100 font-semibold">Owl</strong> para <strong className="text-neutral-100 font-semibold">Coty</strong> y <strong className="text-neutral-100 font-semibold">Yasmín</strong>. Todas las fechas límite, estados y observaciones técnicas se editan en tiempo real.
                   </p>
                 </div>
               </div>
@@ -322,9 +322,9 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
                 <button
                   onClick={() => setIsModalOpen(true)}
-                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 via-cyan-500 to-blue-600 text-neutral-950 font-bold text-xs shadow-lg shadow-cyan-500/25 hover:brightness-110 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 via-cyan-500 to-blue-600 text-neutral-950 font-bold text-xs shadow-lg shadow-cyan-500/25 hover:brightness-110 transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <Plus className="w-4 h-4 stroke-[2.5]" />
+                  <Plus className="w-4 h-4 stroke-[2.5] shrink-0" />
                   <span>Nueva Solicitud a Víctor</span>
                 </button>
               </div>
@@ -332,69 +332,69 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
             </div>
 
             {/* Real-time counters summary */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-5 border-t border-neutral-800/80">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 mt-5 sm:mt-6 pt-4 sm:pt-5 border-t border-neutral-800/80">
               <div className="p-3 rounded-xl bg-emerald-950/25 border border-emerald-500/40">
                 <span className="text-[10px] uppercase font-semibold text-emerald-400 flex items-center gap-1">
-                  <span>✅</span> Finalizadas (LISTO)
+                  <span>✅</span> Finalizadas
                 </span>
-                <span className="text-xl font-bold font-mono text-emerald-200">{countFinalizadas}</span>
+                <span className="text-xl font-bold font-mono tabular-nums text-emerald-200">{countFinalizadas}</span>
               </div>
               <div className="p-3 rounded-xl bg-blue-950/20 border border-blue-500/30">
                 <span className="text-[10px] uppercase font-semibold text-blue-400 block">En Curso</span>
-                <span className="text-xl font-bold font-mono text-blue-200">{countEnCurso}</span>
+                <span className="text-xl font-bold font-mono tabular-nums text-blue-200">{countEnCurso}</span>
               </div>
               <div className="p-3 rounded-xl bg-neutral-950/60 border border-neutral-800">
                 <span className="text-[10px] uppercase font-semibold text-neutral-400 block">Sin Novedades</span>
-                <span className="text-xl font-bold font-mono text-neutral-300">{countSinNovedades}</span>
+                <span className="text-xl font-bold font-mono tabular-nums text-neutral-300">{countSinNovedades}</span>
               </div>
               <div className="p-3 rounded-xl bg-amber-950/20 border border-amber-500/30">
                 <span className="text-[10px] uppercase font-semibold text-amber-400 block">Terminadas / Pruebas</span>
-                <span className="text-xl font-bold font-mono text-amber-200">{countTerminadas}</span>
+                <span className="text-xl font-bold font-mono tabular-nums text-amber-200">{countTerminadas}</span>
               </div>
             </div>
 
           </div>
 
           {/* Quick Category Segmentation: Operatividad vs 10 Campos Nuevos vs 27 Reportes */}
-          <div className="p-3 rounded-2xl bg-neutral-900/70 border border-cyan-500/25 flex flex-wrap items-center justify-between gap-2 text-xs">
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-neutral-400 font-semibold px-2">Bloque de Desarrollo:</span>
+          <div className="p-3 rounded-2xl bg-neutral-900/70 border border-cyan-500/25 flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 text-xs">
+            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-1 lg:pb-0 lg:flex-wrap">
+              <span className="text-neutral-400 font-semibold px-1.5 hidden sm:inline shrink-0">Bloque:</span>
               <button
                 onClick={() => setFilterCategory('all')}
-                className={`px-3 py-1.5 rounded-xl font-semibold transition-colors cursor-pointer ${
+                className={`min-h-[38px] lg:min-h-0 px-3 py-1.5 rounded-xl font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
                   filterCategory === 'all'
                     ? 'bg-cyan-500/20 text-cyan-200 border border-cyan-400/40'
-                    : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800'
+                    : 'text-neutral-400 bg-neutral-950/50 lg:bg-transparent border border-neutral-800/80 lg:border-transparent hover:text-neutral-200 hover:bg-neutral-800'
                 }`}
               >
-                Todo el Tablero ({tasks.length})
+                Todo ({tasks.length})
               </button>
               <button
                 onClick={() => setFilterCategory('campos')}
-                className={`px-3 py-1.5 rounded-xl font-semibold transition-colors cursor-pointer ${
+                className={`min-h-[38px] lg:min-h-0 px-3 py-1.5 rounded-xl font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
                   filterCategory === 'campos'
                     ? 'bg-red-500/20 text-red-200 border border-red-400/40'
-                    : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800'
+                    : 'text-neutral-400 bg-neutral-950/50 lg:bg-transparent border border-neutral-800/80 lg:border-transparent hover:text-neutral-200 hover:bg-neutral-800'
                 }`}
               >
-                1. Campos Nuevos · Hacer Primero ({countCampos})
+                1. Campos Nuevos ({countCampos})
               </button>
               <button
                 onClick={() => setFilterCategory('reportes')}
-                className={`px-3 py-1.5 rounded-xl font-semibold transition-colors cursor-pointer ${
+                className={`min-h-[38px] lg:min-h-0 px-3 py-1.5 rounded-xl font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
                   filterCategory === 'reportes'
                     ? 'bg-amber-500/20 text-amber-200 border border-amber-400/40'
-                    : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800'
+                    : 'text-neutral-400 bg-neutral-950/50 lg:bg-transparent border border-neutral-800/80 lg:border-transparent hover:text-neutral-200 hover:bg-neutral-800'
                 }`}
               >
-                2. Reportes Owl & Sly Soft ({countReportes})
+                2. Reportes ({countReportes})
               </button>
               <button
                 onClick={() => setFilterCategory('operatividad')}
-                className={`px-3 py-1.5 rounded-xl font-semibold transition-colors cursor-pointer ${
+                className={`min-h-[38px] lg:min-h-0 px-3 py-1.5 rounded-xl font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
                   filterCategory === 'operatividad'
                     ? 'bg-blue-500/20 text-blue-200 border border-blue-400/40'
-                    : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800'
+                    : 'text-neutral-400 bg-neutral-950/50 lg:bg-transparent border border-neutral-800/80 lg:border-transparent hover:text-neutral-200 hover:bg-neutral-800'
                 }`}
               >
                 Operatividad Inicial ({countOperatividad})
@@ -404,7 +404,7 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
             {onNavigateSection && (
               <button
                 onClick={() => onNavigateSection('reports_spec')}
-                className="px-3 py-1.5 rounded-xl bg-neutral-950 hover:bg-neutral-800 text-cyan-300 border border-cyan-500/30 font-medium cursor-pointer"
+                className="w-full lg:w-auto min-h-[38px] lg:min-h-0 px-3 py-1.5 rounded-xl bg-neutral-950 hover:bg-neutral-800 text-cyan-300 border border-cyan-500/30 font-medium cursor-pointer text-center"
               >
                 Ver documento técnico de Fórmulas & Etapas →
               </button>
@@ -412,206 +412,238 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
           </div>
 
           {/* Filter and View Controls Bar */}
-          <div className="p-4 rounded-2xl bg-neutral-900/60 border border-neutral-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="p-3.5 sm:p-4 rounded-2xl bg-neutral-900/60 border border-neutral-800 flex flex-col lg:flex-row lg:items-center justify-between gap-3.5">
             
             {/* Requester Tabs */}
-            <div className="flex flex-wrap items-center gap-1.5 text-xs">
-              <span className="text-neutral-500 text-[11px] uppercase tracking-wider font-semibold mr-1">
+            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-1 lg:pb-0 lg:flex-wrap text-xs">
+              <span className="text-neutral-500 text-[11px] uppercase tracking-wider font-semibold mr-1 hidden sm:inline shrink-0">
                 Filtrar:
               </span>
               <button
                 onClick={() => setFilterRequester('all')}
-                className={`px-3 py-1.5 rounded-xl font-medium transition-colors cursor-pointer ${
+                className={`min-h-[38px] lg:min-h-0 px-3 py-1.5 rounded-xl font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
                   filterRequester === 'all'
                     ? 'bg-cyan-500/20 text-cyan-200 border border-cyan-400/40 font-semibold'
-                    : 'text-neutral-400 hover:text-white hover:bg-neutral-800'
+                    : 'text-neutral-400 bg-neutral-950/50 lg:bg-transparent border border-neutral-800/80 lg:border-transparent hover:text-white hover:bg-neutral-800'
                 }`}
               >
                 Todas ({tasks.length})
               </button>
               <button
                 onClick={() => setFilterRequester('listo')}
-                className={`px-3 py-1.5 rounded-xl font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
+                className={`min-h-[38px] lg:min-h-0 px-3 py-1.5 rounded-xl font-medium transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                   filterRequester === 'listo'
                     ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-400/50 font-semibold'
-                    : 'text-neutral-400 hover:text-white hover:bg-neutral-800'
+                    : 'text-neutral-400 bg-neutral-950/50 lg:bg-transparent border border-neutral-800/80 lg:border-transparent hover:text-white hover:bg-neutral-800'
                 }`}
               >
-                <span>✅ Solo con LISTO</span>
-                <span className="px-1.5 py-0.2 rounded-full bg-neutral-800 text-[10px] text-emerald-300">
+                <span>✅ Solo LISTO</span>
+                <span className="px-1.5 py-0.2 rounded-full bg-neutral-800 text-[10px] text-emerald-300 tabular-nums">
                   {countFinalizadas}
                 </span>
               </button>
               <button
                 onClick={() => setFilterRequester('Coty')}
-                className={`px-3 py-1.5 rounded-xl font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
+                className={`min-h-[38px] lg:min-h-0 px-3 py-1.5 rounded-xl font-medium transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                   filterRequester === 'Coty'
                     ? 'bg-amber-500/20 text-amber-200 border border-amber-400/40 font-semibold'
-                    : 'text-neutral-400 hover:text-white hover:bg-neutral-800'
+                    : 'text-neutral-400 bg-neutral-950/50 lg:bg-transparent border border-neutral-800/80 lg:border-transparent hover:text-white hover:bg-neutral-800'
                 }`}
               >
-                <span>👑 Solicitudes Coty</span>
-                <span className="px-1.5 py-0.2 rounded-full bg-neutral-800 text-[10px] text-amber-300">
+                <span>👑 Coty</span>
+                <span className="px-1.5 py-0.2 rounded-full bg-neutral-800 text-[10px] text-amber-300 tabular-nums">
                   {tasks.filter(t => t.requestedBy === 'Coty').length}
                 </span>
               </button>
               <button
                 onClick={() => setFilterRequester('Yasmín')}
-                className={`px-3 py-1.5 rounded-xl font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
+                className={`min-h-[38px] lg:min-h-0 px-3 py-1.5 rounded-xl font-medium transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                   filterRequester === 'Yasmín'
                     ? 'bg-rose-500/20 text-rose-200 border border-rose-400/40 font-semibold'
-                    : 'text-neutral-400 hover:text-white hover:bg-neutral-800'
+                    : 'text-neutral-400 bg-neutral-950/50 lg:bg-transparent border border-neutral-800/80 lg:border-transparent hover:text-white hover:bg-neutral-800'
                 }`}
               >
-                <span>👗 Solicitudes Yasmín</span>
-                <span className="px-1.5 py-0.2 rounded-full bg-neutral-800 text-[10px] text-rose-300">
+                <span>👗 Yasmín</span>
+                <span className="px-1.5 py-0.2 rounded-full bg-neutral-800 text-[10px] text-rose-300 tabular-nums">
                   {tasks.filter(t => t.requestedBy === 'Yasmín').length}
                 </span>
               </button>
             </div>
 
             {/* Status filter & Search */}
-            <div className="flex flex-wrap items-center gap-2 text-xs">
-              <div className="relative">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 text-xs w-full lg:w-auto">
+              <div className="relative flex-1 sm:flex-initial">
                 <Search className="w-3.5 h-3.5 text-neutral-500 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   placeholder="Buscar solicitud o módulo..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8 pr-3 py-1.5 rounded-xl bg-neutral-950 border border-neutral-800 text-xs text-neutral-200 focus:outline-none focus:border-cyan-500/50 w-48 sm:w-56"
+                  className="min-h-[40px] lg:min-h-0 pl-8 pr-3 py-1.5 rounded-xl bg-neutral-950 border border-neutral-800 text-xs text-neutral-200 focus:outline-none focus:border-cyan-500/50 w-full sm:w-52"
                 />
               </div>
 
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="bg-neutral-950 border border-neutral-800 rounded-xl px-2.5 py-1.5 text-neutral-300 text-xs focus:outline-none cursor-pointer"
-              >
-                <option value="all">Todos los Estados</option>
-                <option value="finalizado">✅ Finalizado (LISTO)</option>
-                <option value="en_curso">🔵 En Curso</option>
-                <option value="sin_novedades">⚪ Sin Novedades</option>
-                <option value="terminada">🟡 Terminada</option>
-                <option value="probada">🟢 Probada</option>
-              </select>
+              <div className="flex items-center gap-2">
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="min-h-[40px] lg:min-h-0 flex-1 sm:flex-initial bg-neutral-950 border border-neutral-800 rounded-xl px-2.5 py-1.5 text-neutral-300 text-xs focus:outline-none cursor-pointer"
+                >
+                  <option value="all">Todos los Estados</option>
+                  <option value="finalizado">✅ Finalizado (LISTO)</option>
+                  <option value="en_curso">🔵 En Curso</option>
+                  <option value="sin_novedades">⚪ Sin Novedades</option>
+                  <option value="terminada">🟡 Terminada</option>
+                  <option value="probada">🟢 Probada</option>
+                </select>
 
-              <div className="flex rounded-xl bg-neutral-950 p-1 border border-neutral-800">
-                <button
-                  onClick={() => setViewMode('table')}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium cursor-pointer transition-colors ${
-                    viewMode === 'table' ? 'bg-cyan-500/20 text-cyan-200' : 'text-neutral-400 hover:text-white'
-                  }`}
-                >
-                  Tabla
-                </button>
-                <button
-                  onClick={() => setViewMode('kanban')}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium cursor-pointer transition-colors ${
-                    viewMode === 'kanban' ? 'bg-cyan-500/20 text-cyan-200' : 'text-neutral-400 hover:text-white'
-                  }`}
-                >
-                  Kanban
-                </button>
+                <div className="flex rounded-xl bg-neutral-950 p-1 border border-neutral-800 shrink-0">
+                  <button
+                    onClick={() => setViewMode('table')}
+                    className={`min-h-[32px] px-2.5 py-1 rounded-lg text-xs font-medium cursor-pointer transition-colors ${
+                      viewMode === 'table' ? 'bg-cyan-500/20 text-cyan-200' : 'text-neutral-400 hover:text-white'
+                    }`}
+                  >
+                    Lista
+                  </button>
+                  <button
+                    onClick={() => setViewMode('kanban')}
+                    className={`min-h-[32px] px-2.5 py-1 rounded-lg text-xs font-medium cursor-pointer transition-colors ${
+                      viewMode === 'kanban' ? 'bg-cyan-500/20 text-cyan-200' : 'text-neutral-400 hover:text-white'
+                    }`}
+                  >
+                    Kanban
+                  </button>
+                </div>
               </div>
             </div>
 
           </div>
 
-          {/* Main Board: Table View or Kanban View */}
+          {/* Main Board: Table/Cards View or Kanban View */}
           {viewMode === 'table' ? (
-            <div className="rounded-2xl border border-neutral-800 bg-neutral-900/60 overflow-hidden shadow-2xl">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr className="border-b border-neutral-800 bg-neutral-950/70 text-neutral-400 uppercase text-[10px] tracking-wider font-semibold">
-                      <th className="py-3.5 px-4 min-w-[220px]">Solicitud a Víctor / Módulo</th>
-                      <th className="py-3.5 px-3">Solicitante</th>
-                      <th className="py-3.5 px-3">Prioridad</th>
-                      <th className="py-3.5 px-3">
-                        <span className="flex items-center gap-1 text-cyan-300">
-                          <Calendar className="w-3.5 h-3.5" />
-                          Fecha Límite (Editable)
-                        </span>
-                      </th>
-                      <th className="py-3.5 px-3">Estado</th>
-                      <th className="py-3.5 px-4 min-w-[260px]">Observaciones & Avance (Click para editar)</th>
-                      <th className="py-3.5 px-3 text-right">Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-neutral-800/60">
-                    {filteredTasks.length === 0 ? (
-                      <tr>
-                        <td colSpan={7} className="text-center py-12 text-neutral-500 text-sm">
-                          No se encontraron solicitudes con los filtros actuales.
-                        </td>
-                      </tr>
-                    ) : (
-                      filteredTasks.map((task) => (
-                        <tr key={task.id} className="hover:bg-neutral-800/30 transition-colors group">
-                          
-                          {/* Title & Module */}
-                          <td className="py-3.5 px-4">
-                            <div className="font-serif font-bold text-sm text-neutral-100 group-hover:text-cyan-200 transition-colors flex items-start gap-1.5">
-                              {task.status === 'finalizado' && (
-                                <span className="text-emerald-400 text-xs mt-0.5 shrink-0" title="Completado / Listo">✓</span>
-                              )}
-                              <span>{task.title}</span>
-                            </div>
-                            <div className="flex items-center gap-2 mt-1">
+            <>
+              {/* Mobile Stacked Task Cards (< md) */}
+              <div className="md:hidden space-y-3">
+                {filteredTasks.length === 0 ? (
+                  <div className="p-8 text-center rounded-2xl bg-neutral-900/60 border border-neutral-800 text-neutral-500 text-xs">
+                    No se encontraron solicitudes con los filtros actuales.
+                  </div>
+                ) : (
+                  filteredTasks.map((task) => {
+                    const isLocked = task.status === 'finalizado' && !canModifyFinalizedTask;
+                    return (
+                      <div
+                        key={task.id}
+                        className="p-4 rounded-2xl bg-neutral-900/80 border border-neutral-800 space-y-3.5"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="space-y-1.5 min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
                               <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-neutral-950 text-cyan-300 border border-neutral-800">
                                 {task.module}
                               </span>
-                              {task.specs && (
-                                <span className="text-[10px] text-neutral-500 truncate max-w-xs" title={task.specs}>
-                                  Specs: {task.specs}
-                                </span>
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${
+                                task.requestedBy === 'Coty'
+                                  ? 'bg-amber-500/10 text-amber-300 border-amber-500/30'
+                                  : task.requestedBy === 'Yasmín'
+                                  ? 'bg-rose-500/10 text-rose-300 border-rose-500/30'
+                                  : 'bg-purple-500/10 text-purple-300 border-purple-500/30'
+                              }`}>
+                                {task.requestedBy === 'Coty' ? '👑 Coty' : task.requestedBy === 'Yasmín' ? '👗 Yasmín' : '🏬 ' + task.requestedBy}
+                              </span>
+                              {getPriorityBadge(task.priority)}
+                            </div>
+
+                            <h4 className="font-serif font-bold text-base text-neutral-100 leading-snug flex items-start gap-1.5">
+                              {task.status === 'finalizado' && (
+                                <span className="text-emerald-400 text-xs mt-1 shrink-0">✓</span>
                               )}
-                            </div>
-                          </td>
+                              <span>{task.title}</span>
+                            </h4>
+                          </div>
 
-                          {/* Requester */}
-                          <td className="py-3.5 px-3 whitespace-nowrap">
-                            <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium border ${
-                              task.requestedBy === 'Coty'
-                                ? 'bg-amber-500/10 text-amber-300 border-amber-500/30'
-                                : task.requestedBy === 'Yasmín'
-                                ? 'bg-rose-500/10 text-rose-300 border-rose-500/30'
-                                : 'bg-purple-500/10 text-purple-300 border-purple-500/30'
-                            }`}>
-                              {task.requestedBy === 'Coty' ? '👑 Coty' : task.requestedBy === 'Yasmín' ? '👗 Yasmín' : '🏬 ' + task.requestedBy}
-                            </span>
-                          </td>
-
-                          {/* Priority */}
-                          <td className="py-3.5 px-3 whitespace-nowrap">
-                            {getPriorityBadge(task.priority)}
-                          </td>
-
-                          {/* MODIFIABLE DEADLINE */}
-                          <td className="py-3.5 px-3 whitespace-nowrap">
-                            <div className="flex items-center gap-1.5">
-                              <div className="flex items-center bg-neutral-950 hover:bg-neutral-900 border border-neutral-800 hover:border-cyan-500/60 rounded-xl px-2.5 py-1 transition-all group/date cursor-pointer" title="Haz clic en la fecha para modificarla">
-                                <Calendar className="w-3.5 h-3.5 text-cyan-400 mr-1.5 shrink-0" />
-                                <input
-                                  type="date"
-                                  value={task.deadline}
-                                  disabled={task.status === 'finalizado' && !canModifyFinalizedTask}
-                                  onChange={(e) => handleDeadlineChange(task.id, e.target.value)}
-                                  className="bg-transparent text-neutral-200 font-mono text-xs focus:outline-none cursor-pointer w-28 disabled:opacity-60 disabled:cursor-not-allowed"
-                                  title="Modificar fecha límite"
-                                />
+                          {/* Card Actions */}
+                          <div className="flex items-center gap-1 shrink-0">
+                            {confirmDeleteId === task.id ? (
+                              <div className="flex items-center gap-1">
+                                <button
+                                  onClick={() => executeDeleteTask(task.id)}
+                                  className="min-h-[36px] px-2.5 py-1 rounded-lg bg-red-500/20 text-red-300 border border-red-500/40 text-[11px] font-bold cursor-pointer"
+                                >
+                                  Borrar
+                                </button>
+                                <button
+                                  onClick={() => setConfirmDeleteId(null)}
+                                  className="min-h-[36px] px-2.5 py-1 rounded-lg bg-neutral-800 text-neutral-300 text-[11px] cursor-pointer"
+                                >
+                                  No
+                                </button>
                               </div>
-                            </div>
-                          </td>
+                            ) : (
+                              <>
+                                {isLocked ? (
+                                  <span
+                                    className="min-h-[38px] min-w-[38px] rounded-lg text-emerald-500/70 inline-flex items-center justify-center"
+                                    title="Validado como LISTO · Solo Dirección puede reabrir"
+                                  >
+                                    <Lock className="w-4 h-4" />
+                                  </span>
+                                ) : (
+                                  <button
+                                    onClick={() => setEditingTask(task)}
+                                    className="min-h-[38px] min-w-[38px] rounded-xl bg-neutral-950/80 border border-neutral-800 text-neutral-300 hover:text-cyan-300 flex items-center justify-center cursor-pointer"
+                                    title="Editar toda la tarea"
+                                  >
+                                    <Edit3 className="w-4 h-4" />
+                                  </button>
+                                )}
+                                {canDeleteTasks && (
+                                  <button
+                                    onClick={() => setConfirmDeleteId(task.id)}
+                                    className="min-h-[38px] min-w-[38px] rounded-xl bg-neutral-950/80 border border-neutral-800 text-neutral-400 hover:text-red-400 flex items-center justify-center cursor-pointer"
+                                    title="Eliminar tarea"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        </div>
 
-                          {/* Interactive Status Selector */}
-                          <td className="py-3.5 px-3 whitespace-nowrap">
+                        {task.specs && (
+                          <div className="text-[11px] text-neutral-400 bg-neutral-950/60 px-3 py-2 rounded-xl border border-neutral-800/80">
+                            <strong className="text-neutral-300">Specs:</strong> {task.specs}
+                          </div>
+                        )}
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          <div>
+                            <label className="text-[10px] uppercase tracking-wider text-cyan-300/90 block mb-1">
+                              Fecha Límite (Editable)
+                            </label>
+                            <div className="min-h-[42px] flex items-center bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-1.5">
+                              <Calendar className="w-4 h-4 text-cyan-400 mr-2 shrink-0" />
+                              <input
+                                type="date"
+                                value={task.deadline}
+                                disabled={isLocked}
+                                onChange={(e) => handleDeadlineChange(task.id, e.target.value)}
+                                className="bg-transparent text-neutral-200 font-mono text-xs focus:outline-none cursor-pointer w-full tabular-nums disabled:opacity-60"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="text-[10px] uppercase tracking-wider text-neutral-400 block mb-1">
+                              Estado
+                            </label>
                             <select
                               value={task.status}
-                              disabled={task.status === 'finalizado' && !canModifyFinalizedTask}
+                              disabled={isLocked}
                               onChange={(e) => handleStatusChange(task.id, e.target.value as TaskStatus)}
-                              className={`border rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:border-cyan-400 cursor-pointer disabled:cursor-not-allowed ${
+                              className={`min-h-[42px] w-full border rounded-xl px-3 py-1.5 text-xs focus:outline-none cursor-pointer disabled:opacity-60 ${
                                 task.status === 'finalizado'
                                   ? 'bg-emerald-950/40 text-emerald-300 border-emerald-500/40 font-semibold'
                                   : task.status === 'en_curso'
@@ -626,112 +658,291 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                               <option value="probada">🟢 Probada</option>
                               <option value="bloqueada">🔴 Bloqueada</option>
                             </select>
-                          </td>
+                          </div>
+                        </div>
 
-                          {/* Observations Column (Editable) */}
-                          <td className="py-3.5 px-4 text-xs text-neutral-300">
-                            {editingObsTaskId === task.id ? (
-                              <div className="flex items-center gap-1.5">
-                                <input
-                                  type="text"
-                                  maxLength={MAX_OBSERVATIONS_LENGTH}
-                                  value={tempObsText}
-                                  onChange={(e) => setTempObsText(e.target.value)}
-                                  className="w-full bg-neutral-950 border border-cyan-500/60 rounded px-2 py-1 text-xs text-neutral-100 focus:outline-none"
-                                  autoFocus
-                                />
-                                <button
-                                  onClick={() => handleSaveObservation(task.id)}
-                                  className="p-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30 cursor-pointer"
-                                  title="Guardar"
-                                >
-                                  <Check className="w-3.5 h-3.5" />
-                                </button>
-                                <button
-                                  onClick={() => setEditingObsTaskId(null)}
-                                  className="p-1 rounded bg-neutral-800 text-neutral-400 hover:text-white cursor-pointer"
-                                  title="Cancelar"
-                                >
-                                  <X className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            ) : (
-                              <div 
+                        <div className="pt-2 border-t border-neutral-800/80 space-y-1.5">
+                          <div className="flex items-center justify-between text-[11px] text-neutral-400">
+                            <span>Observaciones & Avance</span>
+                            {!isLocked && editingObsTaskId !== task.id && (
+                              <button
+                                type="button"
                                 onClick={() => {
-                                  if (task.status === 'finalizado' && !canModifyFinalizedTask) {
-                                    showToast('Solicitud Finalizada y validada.');
-                                    return;
-                                  }
                                   setEditingObsTaskId(task.id);
                                   setTempObsText(task.observations);
                                 }}
-                                className="cursor-pointer hover:bg-neutral-950/70 p-1.5 rounded-lg border border-transparent hover:border-neutral-800 transition-colors flex items-start justify-between gap-2"
-                                title="Clic para editar observaciones"
+                                className="inline-flex items-center gap-1 text-cyan-300 font-medium cursor-pointer"
                               >
-                                <span className="leading-relaxed">{task.observations}</span>
-                                <Edit3 className="w-3.5 h-3.5 text-neutral-500 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-0.5" />
-                              </div>
+                                <Edit3 className="w-3 h-3" />
+                                <span>Editar nota</span>
+                              </button>
                             )}
-                          </td>
+                          </div>
 
-                          {/* Actions with inline delete confirmation */}
-                          <td className="py-3.5 px-3 text-right whitespace-nowrap">
-                            {confirmDeleteId === task.id ? (
-                              <div className="flex items-center justify-end gap-1">
+                          {editingObsTaskId === task.id ? (
+                            <div className="space-y-2">
+                              <textarea
+                                rows={2}
+                                maxLength={MAX_OBSERVATIONS_LENGTH}
+                                value={tempObsText}
+                                onChange={(e) => setTempObsText(e.target.value)}
+                                className="w-full bg-neutral-950 border border-cyan-500/60 rounded-xl px-3 py-2 text-xs text-neutral-100 focus:outline-none"
+                                autoFocus
+                              />
+                              <div className="flex items-center justify-end gap-2">
                                 <button
-                                  onClick={() => executeDeleteTask(task.id)}
-                                  className="px-2 py-1 rounded bg-red-500/20 text-red-300 border border-red-500/40 text-[10px] font-bold hover:bg-red-500/30 cursor-pointer"
+                                  type="button"
+                                  onClick={() => setEditingObsTaskId(null)}
+                                  className="min-h-[38px] px-3 py-1.5 rounded-lg bg-neutral-800 text-neutral-300 text-xs cursor-pointer"
                                 >
-                                  Eliminar
+                                  Cancelar
                                 </button>
                                 <button
-                                  onClick={() => setConfirmDeleteId(null)}
-                                  className="px-2 py-1 rounded bg-neutral-800 text-neutral-300 text-[10px] hover:bg-neutral-700 cursor-pointer"
+                                  type="button"
+                                  onClick={() => handleSaveObservation(task.id)}
+                                  className="min-h-[38px] px-3.5 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-200 border border-emerald-500/40 text-xs font-semibold flex items-center gap-1 cursor-pointer"
                                 >
-                                  No
+                                  <Check className="w-3.5 h-3.5" />
+                                  <span>Guardar</span>
                                 </button>
                               </div>
-                            ) : (
-                              <div className="flex items-center justify-end gap-1">
-                                {task.status === 'finalizado' && !canModifyFinalizedTask ? (
-                                  <span
-                                    className="p-1.5 rounded-lg text-emerald-500/70 inline-flex items-center"
-                                    title="Validado como LISTO · Solo Dirección puede reabrir"
-                                  >
-                                    <Lock className="w-3.5 h-3.5" />
-                                  </span>
-                                ) : (
-                                  <button
-                                    onClick={() => setEditingTask(task)}
-                                    className="p-1.5 rounded-lg text-neutral-400 hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors cursor-pointer"
-                                    title="Editar toda la tarea y fechas"
-                                  >
-                                    <Edit3 className="w-4 h-4" />
-                                  </button>
-                                )}
-                                {canDeleteTasks && (
-                                  <button
-                                    onClick={() => setConfirmDeleteId(task.id)}
-                                    className="p-1.5 rounded-lg text-neutral-500 hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
-                                    title="Eliminar tarea"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </button>
-                                )}
-                              </div>
-                            )}
-                          </td>
-
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
+                            </div>
+                          ) : (
+                            <div
+                              onClick={() => {
+                                if (isLocked) {
+                                  showToast('Solicitud Finalizada y validada.');
+                                  return;
+                                }
+                                setEditingObsTaskId(task.id);
+                                setTempObsText(task.observations);
+                              }}
+                              className="text-xs text-neutral-300 leading-relaxed bg-neutral-950/60 p-2.5 rounded-xl border border-neutral-800/80 cursor-pointer"
+                            >
+                              {task.observations}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
-            </div>
+
+              {/* Desktop Table (md+) */}
+              <div className="hidden md:block rounded-2xl border border-neutral-800 bg-neutral-900/60 overflow-hidden shadow-2xl">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="border-b border-neutral-800 bg-neutral-950/70 text-neutral-400 uppercase text-[10px] tracking-wider font-semibold">
+                        <th className="py-3.5 px-4 min-w-[220px]">Solicitud a Víctor / Módulo</th>
+                        <th className="py-3.5 px-3">Solicitante</th>
+                        <th className="py-3.5 px-3">Prioridad</th>
+                        <th className="py-3.5 px-3">
+                          <span className="flex items-center gap-1 text-cyan-300">
+                            <Calendar className="w-3.5 h-3.5" />
+                            Fecha Límite (Editable)
+                          </span>
+                        </th>
+                        <th className="py-3.5 px-3">Estado</th>
+                        <th className="py-3.5 px-4 min-w-[260px]">Observaciones & Avance (Click para editar)</th>
+                        <th className="py-3.5 px-3 text-right">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-neutral-800/60">
+                      {filteredTasks.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="text-center py-12 text-neutral-500 text-sm">
+                            No se encontraron solicitudes con los filtros actuales.
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredTasks.map((task) => (
+                          <tr key={task.id} className="hover:bg-neutral-800/30 transition-colors group">
+                            
+                            {/* Title & Module */}
+                            <td className="py-3.5 px-4">
+                              <div className="font-serif font-bold text-sm text-neutral-100 group-hover:text-cyan-200 transition-colors flex items-start gap-1.5">
+                                {task.status === 'finalizado' && (
+                                  <span className="text-emerald-400 text-xs mt-0.5 shrink-0" title="Completado / Listo">✓</span>
+                                )}
+                                <span>{task.title}</span>
+                              </div>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-neutral-950 text-cyan-300 border border-neutral-800">
+                                  {task.module}
+                                </span>
+                                {task.specs && (
+                                  <span className="text-[10px] text-neutral-500 truncate max-w-xs" title={task.specs}>
+                                    Specs: {task.specs}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+
+                            {/* Requester */}
+                            <td className="py-3.5 px-3 whitespace-nowrap">
+                              <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium border ${
+                                task.requestedBy === 'Coty'
+                                  ? 'bg-amber-500/10 text-amber-300 border-amber-500/30'
+                                  : task.requestedBy === 'Yasmín'
+                                  ? 'bg-rose-500/10 text-rose-300 border-rose-500/30'
+                                  : 'bg-purple-500/10 text-purple-300 border-purple-500/30'
+                              }`}>
+                                {task.requestedBy === 'Coty' ? '👑 Coty' : task.requestedBy === 'Yasmín' ? '👗 Yasmín' : '🏬 ' + task.requestedBy}
+                              </span>
+                            </td>
+
+                            {/* Priority */}
+                            <td className="py-3.5 px-3 whitespace-nowrap">
+                              {getPriorityBadge(task.priority)}
+                            </td>
+
+                            {/* MODIFIABLE DEADLINE */}
+                            <td className="py-3.5 px-3 whitespace-nowrap">
+                              <div className="flex items-center gap-1.5">
+                                <div className="flex items-center bg-neutral-950 hover:bg-neutral-900 border border-neutral-800 hover:border-cyan-500/60 rounded-xl px-2.5 py-1 transition-all group/date cursor-pointer" title="Haz clic en la fecha para modificarla">
+                                  <Calendar className="w-3.5 h-3.5 text-cyan-400 mr-1.5 shrink-0" />
+                                  <input
+                                    type="date"
+                                    value={task.deadline}
+                                    disabled={task.status === 'finalizado' && !canModifyFinalizedTask}
+                                    onChange={(e) => handleDeadlineChange(task.id, e.target.value)}
+                                    className="bg-transparent text-neutral-200 font-mono text-xs focus:outline-none cursor-pointer w-28 disabled:opacity-60 disabled:cursor-not-allowed"
+                                    title="Modificar fecha límite"
+                                  />
+                                </div>
+                              </div>
+                            </td>
+
+                            {/* Interactive Status Selector */}
+                            <td className="py-3.5 px-3 whitespace-nowrap">
+                              <select
+                                value={task.status}
+                                disabled={task.status === 'finalizado' && !canModifyFinalizedTask}
+                                onChange={(e) => handleStatusChange(task.id, e.target.value as TaskStatus)}
+                                className={`border rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:border-cyan-400 cursor-pointer disabled:cursor-not-allowed ${
+                                  task.status === 'finalizado'
+                                    ? 'bg-emerald-950/40 text-emerald-300 border-emerald-500/40 font-semibold'
+                                    : task.status === 'en_curso'
+                                    ? 'bg-blue-950/40 text-blue-300 border-blue-500/40 font-semibold'
+                                    : 'bg-neutral-950 text-neutral-200 border-neutral-800'
+                                }`}
+                              >
+                                <option value="finalizado">✅ Finalizado (LISTO)</option>
+                                <option value="en_curso">🔵 En Curso</option>
+                                <option value="sin_novedades">⚪ Sin Novedades</option>
+                                <option value="terminada">🟡 Terminada</option>
+                                <option value="probada">🟢 Probada</option>
+                                <option value="bloqueada">🔴 Bloqueada</option>
+                              </select>
+                            </td>
+
+                            {/* Observations Column (Editable) */}
+                            <td className="py-3.5 px-4 text-xs text-neutral-300">
+                              {editingObsTaskId === task.id ? (
+                                <div className="flex items-center gap-1.5">
+                                  <input
+                                    type="text"
+                                    maxLength={MAX_OBSERVATIONS_LENGTH}
+                                    value={tempObsText}
+                                    onChange={(e) => setTempObsText(e.target.value)}
+                                    className="w-full bg-neutral-950 border border-cyan-500/60 rounded px-2 py-1 text-xs text-neutral-100 focus:outline-none"
+                                    autoFocus
+                                  />
+                                  <button
+                                    onClick={() => handleSaveObservation(task.id)}
+                                    className="p-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30 cursor-pointer"
+                                    title="Guardar"
+                                  >
+                                    <Check className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    onClick={() => setEditingObsTaskId(null)}
+                                    className="p-1 rounded bg-neutral-800 text-neutral-400 hover:text-white cursor-pointer"
+                                    title="Cancelar"
+                                  >
+                                    <X className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              ) : (
+                                <div 
+                                  onClick={() => {
+                                    if (task.status === 'finalizado' && !canModifyFinalizedTask) {
+                                      showToast('Solicitud Finalizada y validada.');
+                                      return;
+                                    }
+                                    setEditingObsTaskId(task.id);
+                                    setTempObsText(task.observations);
+                                  }}
+                                  className="cursor-pointer hover:bg-neutral-950/70 p-1.5 rounded-lg border border-transparent hover:border-neutral-800 transition-colors flex items-start justify-between gap-2"
+                                  title="Clic para editar observaciones"
+                                >
+                                  <span className="leading-relaxed">{task.observations}</span>
+                                  <Edit3 className="w-3.5 h-3.5 text-neutral-500 opacity-60 group-hover:opacity-100 transition-opacity shrink-0 mt-0.5" />
+                                </div>
+                              )}
+                            </td>
+
+                            {/* Actions with inline delete confirmation */}
+                            <td className="py-3.5 px-3 text-right whitespace-nowrap">
+                              {confirmDeleteId === task.id ? (
+                                <div className="flex items-center justify-end gap-1">
+                                  <button
+                                    onClick={() => executeDeleteTask(task.id)}
+                                    className="px-2 py-1 rounded bg-red-500/20 text-red-300 border border-red-500/40 text-[10px] font-bold hover:bg-red-500/30 cursor-pointer"
+                                  >
+                                    Eliminar
+                                  </button>
+                                  <button
+                                    onClick={() => setConfirmDeleteId(null)}
+                                    className="px-2 py-1 rounded bg-neutral-800 text-neutral-300 text-[10px] hover:bg-neutral-700 cursor-pointer"
+                                  >
+                                    No
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="flex items-center justify-end gap-1">
+                                  {task.status === 'finalizado' && !canModifyFinalizedTask ? (
+                                    <span
+                                      className="p-1.5 rounded-lg text-emerald-500/70 inline-flex items-center"
+                                      title="Validado como LISTO · Solo Dirección puede reabrir"
+                                    >
+                                      <Lock className="w-3.5 h-3.5" />
+                                    </span>
+                                  ) : (
+                                    <button
+                                      onClick={() => setEditingTask(task)}
+                                      className="p-1.5 rounded-lg text-neutral-400 hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors cursor-pointer"
+                                      title="Editar toda la tarea y fechas"
+                                    >
+                                      <Edit3 className="w-4 h-4" />
+                                    </button>
+                                  )}
+                                  {canDeleteTasks && (
+                                    <button
+                                      onClick={() => setConfirmDeleteId(task.id)}
+                                      className="p-1.5 rounded-lg text-neutral-500 hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
+                                      title="Eliminar tarea"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+                            </td>
+
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
           ) : (
-            /* Kanban View */
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            /* Kanban View: 1 col mobile, 2 cols tablet, 4 cols xl desktop */
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
               
               {/* Column 1: Finalizado / LISTO */}
               <div className="p-4 rounded-2xl bg-neutral-900/60 border border-emerald-900/40 space-y-3">
@@ -739,12 +950,12 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                   <span className="text-xs font-serif font-bold text-emerald-300 flex items-center gap-1.5">
                     <span>✅ Finalizado (LISTO)</span>
                   </span>
-                  <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-neutral-950 text-emerald-300 font-bold">
-                    {tasks.filter(t => t.status === 'finalizado').length}
+                  <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-neutral-950 text-emerald-300 font-bold tabular-nums">
+                    {filteredTasks.filter(t => t.status === 'finalizado').length}
                   </span>
                 </div>
                 <div className="space-y-2.5">
-                  {tasks.filter(t => t.status === 'finalizado').map(t => (
+                  {filteredTasks.filter(t => t.status === 'finalizado').map(t => (
                     <KanbanCard 
                       key={t.id} 
                       task={t} 
@@ -763,12 +974,12 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                   <span className="text-xs font-serif font-bold text-blue-300 flex items-center gap-1.5">
                     <span>🔵 En Curso (Víctor)</span>
                   </span>
-                  <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-neutral-950 text-blue-300 font-bold">
-                    {tasks.filter(t => t.status === 'en_curso').length}
+                  <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-neutral-950 text-blue-300 font-bold tabular-nums">
+                    {filteredTasks.filter(t => t.status === 'en_curso').length}
                   </span>
                 </div>
                 <div className="space-y-2.5">
-                  {tasks.filter(t => t.status === 'en_curso').map(t => (
+                  {filteredTasks.filter(t => t.status === 'en_curso').map(t => (
                     <KanbanCard 
                       key={t.id} 
                       task={t} 
@@ -786,12 +997,12 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                   <span className="text-xs font-serif font-bold text-neutral-300 flex items-center gap-1.5">
                     <span>⚪ Sin Novedades</span>
                   </span>
-                  <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-neutral-950 text-neutral-400 font-bold">
-                    {tasks.filter(t => t.status === 'sin_novedades').length}
+                  <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-neutral-950 text-neutral-400 font-bold tabular-nums">
+                    {filteredTasks.filter(t => t.status === 'sin_novedades').length}
                   </span>
                 </div>
                 <div className="space-y-2.5">
-                  {tasks.filter(t => t.status === 'sin_novedades').map(t => (
+                  {filteredTasks.filter(t => t.status === 'sin_novedades').map(t => (
                     <KanbanCard 
                       key={t.id} 
                       task={t} 
@@ -809,12 +1020,12 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                   <span className="text-xs font-serif font-bold text-amber-300 flex items-center gap-1.5">
                     <span>🟡 Terminada / Prueba</span>
                   </span>
-                  <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-neutral-950 text-amber-300 font-bold">
-                    {tasks.filter(t => t.status === 'terminada' || t.status === 'probada').length}
+                  <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-neutral-950 text-amber-300 font-bold tabular-nums">
+                    {filteredTasks.filter(t => t.status === 'terminada' || t.status === 'probada').length}
                   </span>
                 </div>
                 <div className="space-y-2.5">
-                  {tasks.filter(t => t.status === 'terminada' || t.status === 'probada').map(t => (
+                  {filteredTasks.filter(t => t.status === 'terminada' || t.status === 'probada').map(t => (
                     <KanbanCard 
                       key={t.id} 
                       task={t} 
@@ -842,21 +1053,21 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
           VISTA 2: BACKLOG DE 10 IDEAS ESTRATÉGICAS PARA OWL
          ========================================================= */}
       {activeSection === 'backlog' && (
-        <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-neutral-900 via-neutral-950 to-neutral-900 border border-cyan-500/30 shadow-2xl space-y-6">
+        <div className="p-4 sm:p-8 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-neutral-900 via-neutral-950 to-neutral-900 border border-cyan-500/30 shadow-2xl space-y-6">
           
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <Lightbulb className="w-5 h-5 text-cyan-400" />
+                <Lightbulb className="w-5 h-5 text-cyan-400 shrink-0" />
                 <h3 className="font-serif text-xl sm:text-2xl font-bold text-neutral-100">
                   Backlog de Evolución · 10 Ideas para el Sistema Owl
                 </h3>
               </div>
               <p className="text-xs sm:text-sm text-neutral-400">
-                Propuestas de alto impacto para futuros sprints de desarrollo. Al hacer clic en "Pasar al Tablero", se crean automáticamente como solicitud activa para Víctor.
+                Propuestas de alto impacto para futuros sprints de desarrollo. Al tocar "Pasar al Tablero", se crean automáticamente como solicitud activa para Víctor.
               </p>
             </div>
-            <span className="text-xs px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 font-medium shrink-0">
+            <span className="self-start sm:self-auto text-xs px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 font-medium shrink-0">
               10 Propuestas Disponibles
             </span>
           </div>
@@ -865,14 +1076,14 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
             {DEV_SUGGESTIONS.map((sug, index) => (
               <div 
                 key={sug.id} 
-                className="p-5 rounded-2xl bg-neutral-950/80 border border-neutral-800 hover:border-cyan-500/40 transition-all flex flex-col justify-between gap-4 group"
+                className="p-4 sm:p-5 rounded-2xl bg-neutral-950/80 border border-neutral-800 hover:border-cyan-500/40 transition-all flex flex-col justify-between gap-4 group"
               >
                 <div className="space-y-2.5">
-                  <div className="flex items-center justify-between text-[10px]">
+                  <div className="flex items-center justify-between gap-2 text-[10px]">
                     <span className="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 font-mono border border-cyan-500/30">
                       #{index + 1} · {sug.defaultModule}
                     </span>
-                    <span className="text-amber-400 font-semibold">
+                    <span className="text-amber-400 font-semibold text-right">
                       {sug.beneficiary}
                     </span>
                   </div>
@@ -893,12 +1104,12 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
 
                 <div className="pt-2 border-t border-neutral-800/80 flex items-center justify-between gap-2">
                   <span className="text-[10px] text-neutral-500 font-mono">
-                    Límite sugerido: {sug.suggestedDeadline}
+                    Límite: {sug.suggestedDeadline}
                   </span>
 
                   <button
                     onClick={() => handleConvertSuggestion(sug)}
-                    className="px-3 py-1.5 rounded-xl bg-cyan-500/20 text-cyan-200 border border-cyan-400/40 text-xs font-semibold hover:bg-cyan-500/30 transition-all flex items-center gap-1 cursor-pointer shrink-0"
+                    className="min-h-[38px] px-3 py-1.5 rounded-xl bg-cyan-500/20 text-cyan-200 border border-cyan-400/40 text-xs font-semibold hover:bg-cyan-500/30 transition-all flex items-center gap-1 cursor-pointer shrink-0"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Pasar al Tablero</span>
@@ -927,20 +1138,20 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
             </div>
             <button
               onClick={() => window.print()}
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-600 text-neutral-950 font-bold text-xs shadow-lg shadow-cyan-500/20 hover:brightness-110 transition-all flex items-center gap-2 cursor-pointer shrink-0"
+              className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-600 text-neutral-950 font-bold text-xs shadow-lg shadow-cyan-500/20 hover:brightness-110 transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0"
             >
-              <Printer className="w-4 h-4" />
+              <Printer className="w-4 h-4 shrink-0" />
               <span>Imprimir / Guardar PDF</span>
             </button>
           </div>
 
-          <div className="p-8 sm:p-10 rounded-3xl bg-neutral-900/90 border border-neutral-800 text-neutral-100 shadow-2xl space-y-6 max-w-5xl mx-auto print:bg-white print:text-black print:border-none print:p-0 print:shadow-none">
+          <div className="p-4 sm:p-8 lg:p-10 rounded-2xl sm:rounded-3xl bg-neutral-900/90 border border-neutral-800 text-neutral-100 shadow-2xl space-y-6 max-w-5xl mx-auto print:bg-white print:text-black print:border-none print:p-0 print:shadow-none">
             <div className="border-b border-cyan-500/30 print:border-black/30 pb-5 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
               <div>
                 <div className="text-cyan-400 print:text-neutral-700 font-mono uppercase text-xs font-bold tracking-widest mb-1">
                   OWL SYSTEM · ÁREA DE DESARROLLO
                 </div>
-                <h1 className="font-serif text-2xl sm:text-3xl font-bold text-neutral-100 print:text-black">
+                <h1 className="font-serif text-xl sm:text-3xl font-bold text-neutral-100 print:text-black">
                   Estado de Solicitudes Técnicas — Víctor
                 </h1>
               </div>
@@ -950,47 +1161,49 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
               </div>
             </div>
 
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="border-b border-neutral-700 print:border-neutral-400 text-neutral-400 print:text-black uppercase text-[10px]">
-                  <th className="py-2 pr-3">Solicitud</th>
-                  <th className="py-2 px-2">Módulo</th>
-                  <th className="py-2 px-2">Solicita</th>
-                  <th className="py-2 px-2">Fecha Límite</th>
-                  <th className="py-2 pl-2">Estado</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-neutral-800 print:divide-neutral-300">
-                {tasks.map((t) => (
-                  <tr key={t.id}>
-                    <td className="py-2.5 pr-3">
-                      <div className="font-semibold text-neutral-100 print:text-black">{t.title}</div>
-                      <div className="text-[11px] text-neutral-400 print:text-neutral-600 mt-0.5">{t.observations}</div>
-                    </td>
-                    <td className="py-2.5 px-2 font-mono text-[11px] text-cyan-300 print:text-neutral-800 whitespace-nowrap">{t.module}</td>
-                    <td className="py-2.5 px-2 whitespace-nowrap">{t.requestedBy}</td>
-                    <td className="py-2.5 px-2 font-mono whitespace-nowrap">{t.deadline}</td>
-                    <td className="py-2.5 pl-2 font-semibold whitespace-nowrap">{getStatusLabel(t.status)}</td>
+            <div className="overflow-x-auto print:overflow-visible">
+              <table className="w-full text-left text-xs border-collapse min-w-[600px] print:min-w-0">
+                <thead>
+                  <tr className="border-b border-neutral-700 print:border-neutral-400 text-neutral-400 print:text-black uppercase text-[10px]">
+                    <th className="py-2 pr-3">Solicitud</th>
+                    <th className="py-2 px-2">Módulo</th>
+                    <th className="py-2 px-2">Solicita</th>
+                    <th className="py-2 px-2">Fecha Límite</th>
+                    <th className="py-2 pl-2">Estado</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-neutral-800 print:divide-neutral-300">
+                  {tasks.map((t) => (
+                    <tr key={t.id}>
+                      <td className="py-2.5 pr-3">
+                        <div className="font-semibold text-neutral-100 print:text-black">{t.title}</div>
+                        <div className="text-[11px] text-neutral-400 print:text-neutral-600 mt-0.5">{t.observations}</div>
+                      </td>
+                      <td className="py-2.5 px-2 font-mono text-[11px] text-cyan-300 print:text-neutral-800 whitespace-nowrap">{t.module}</td>
+                      <td className="py-2.5 px-2 whitespace-nowrap">{t.requestedBy}</td>
+                      <td className="py-2.5 px-2 font-mono whitespace-nowrap">{t.deadline}</td>
+                      <td className="py-2.5 pl-2 font-semibold whitespace-nowrap">{getStatusLabel(t.status)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
 
       {/* Modal to Add New Task for Victor */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-950/80 backdrop-blur-md">
-          <div className="relative w-full max-w-xl rounded-3xl bg-neutral-900 border border-cyan-500/40 shadow-2xl overflow-hidden p-6 sm:p-8 space-y-6">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-2 sm:p-4 bg-neutral-950/80 backdrop-blur-md">
+          <div className="relative w-full max-w-xl max-h-[92dvh] overflow-y-auto rounded-2xl sm:rounded-3xl bg-neutral-900 border border-cyan-500/40 shadow-2xl p-4 sm:p-6 md:p-8 space-y-5">
             
             <div className="flex items-center justify-between border-b border-neutral-800 pb-4">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 flex items-center justify-center shrink-0">
                   <Code2 className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-serif font-bold text-xl text-neutral-100">
+                  <h3 className="font-serif font-bold text-lg sm:text-xl text-neutral-100">
                     Nueva Solicitud para Víctor
                   </h3>
                   <p className="text-xs text-neutral-400">
@@ -1001,7 +1214,7 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
 
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors cursor-pointer"
+                className="min-h-[40px] min-w-[40px] rounded-xl text-neutral-400 hover:text-white hover:bg-neutral-800 flex items-center justify-center transition-colors cursor-pointer shrink-0"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1020,7 +1233,7 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                   placeholder="Ej: Reporte de Rentabilidad por Sucursal o Ficha de Medidas"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-xs text-neutral-100 focus:outline-none focus:border-cyan-400"
+                  className="min-h-[42px] w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-xs text-neutral-100 focus:outline-none focus:border-cyan-400"
                 />
               </div>
 
@@ -1032,7 +1245,7 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                   <select
                     value={newRequestedBy}
                     onChange={(e) => setNewRequestedBy(e.target.value as TaskRequester)}
-                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-neutral-200 focus:outline-none"
+                    className="min-h-[42px] w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-neutral-200 focus:outline-none"
                   >
                     <option value="Coty">👑 Coty (Reportes & Dirección)</option>
                     <option value="Yasmín">👗 Yasmín (Operatividad & Clientes)</option>
@@ -1051,7 +1264,7 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                     placeholder="Ej: Owl Reportes, Kommo Sync, Probadores"
                     value={newModule}
                     onChange={(e) => setNewModule(e.target.value)}
-                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-neutral-100 focus:outline-none"
+                    className="min-h-[42px] w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-neutral-100 focus:outline-none"
                   />
                 </div>
               </div>
@@ -1064,7 +1277,7 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                   <select
                     value={newPriority}
                     onChange={(e) => setNewPriority(e.target.value as TaskPriority)}
-                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-neutral-200 focus:outline-none"
+                    className="min-h-[42px] w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-neutral-200 focus:outline-none"
                   >
                     <option value="urgente">🔴 Urgente</option>
                     <option value="alta">🟡 Alta</option>
@@ -1082,7 +1295,7 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                     required
                     value={newDeadline}
                     onChange={(e) => setNewDeadline(e.target.value)}
-                    className="w-full bg-neutral-950 border border-cyan-500/50 rounded-xl px-3 py-2 text-xs text-neutral-100 focus:outline-none"
+                    className="min-h-[42px] w-full bg-neutral-950 border border-cyan-500/50 rounded-xl px-3 py-2 text-xs text-neutral-100 focus:outline-none"
                   />
                 </div>
 
@@ -1093,7 +1306,7 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                   <select
                     value={newStatus}
                     onChange={(e) => setNewStatus(e.target.value as TaskStatus)}
-                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-neutral-200 focus:outline-none"
+                    className="min-h-[42px] w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-neutral-200 focus:outline-none"
                   >
                     <option value="finalizado">✅ Finalizado (LISTO)</option>
                     <option value="en_curso">🔵 En Curso</option>
@@ -1128,21 +1341,21 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                   placeholder="Ej: Endpoint REST, Webhook en Kommo, filtro por ID de sucursal"
                   value={newSpecs}
                   onChange={(e) => setNewSpecs(e.target.value)}
-                  className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-neutral-100 focus:outline-none"
+                  className="min-h-[42px] w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-neutral-100 focus:outline-none"
                 />
               </div>
 
-              <div className="pt-3 border-t border-neutral-800 flex items-center justify-end gap-3">
+              <div className="pt-3 border-t border-neutral-800 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 sm:gap-3">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-neutral-800 text-neutral-300 text-xs hover:bg-neutral-700 transition-colors cursor-pointer"
+                  className="min-h-[44px] sm:min-h-0 px-4 py-2 rounded-xl bg-neutral-800 text-neutral-300 text-xs hover:bg-neutral-700 transition-colors cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-600 text-neutral-950 font-bold text-xs shadow-md shadow-cyan-500/20 hover:brightness-110 transition-all cursor-pointer"
+                  className="min-h-[44px] sm:min-h-0 px-5 py-2 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-600 text-neutral-950 font-bold text-xs shadow-md shadow-cyan-500/20 hover:brightness-110 transition-all cursor-pointer"
                 >
                   Guardar y Asignar a Víctor
                 </button>
@@ -1156,16 +1369,16 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
 
       {/* Modal to Edit Entire Existing Task & Dates */}
       {editingTask && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-950/80 backdrop-blur-md">
-          <div className="relative w-full max-w-xl rounded-3xl bg-neutral-900 border border-cyan-500/40 shadow-2xl overflow-hidden p-6 sm:p-8 space-y-6">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-2 sm:p-4 bg-neutral-950/80 backdrop-blur-md">
+          <div className="relative w-full max-w-xl max-h-[92dvh] overflow-y-auto rounded-2xl sm:rounded-3xl bg-neutral-900 border border-cyan-500/40 shadow-2xl p-4 sm:p-6 md:p-8 space-y-5">
             
             <div className="flex items-center justify-between border-b border-neutral-800 pb-4">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 flex items-center justify-center shrink-0">
                   <Edit3 className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-serif font-bold text-xl text-neutral-100">
+                  <h3 className="font-serif font-bold text-lg sm:text-xl text-neutral-100">
                     Modificar Solicitud & Fecha
                   </h3>
                   <p className="text-xs text-neutral-400">
@@ -1176,7 +1389,7 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
 
               <button
                 onClick={() => setEditingTask(null)}
-                className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors cursor-pointer"
+                className="min-h-[40px] min-w-[40px] rounded-xl text-neutral-400 hover:text-white hover:bg-neutral-800 flex items-center justify-center transition-colors cursor-pointer shrink-0"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1195,7 +1408,7 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                   disabled={!canEditAllFieldsOfTask(editingTask)}
                   value={editingTask.title}
                   onChange={(e) => setEditingTask({ ...editingTask, title: e.target.value })}
-                  className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-xs text-neutral-100 focus:outline-none focus:border-cyan-400 disabled:opacity-60"
+                  className="min-h-[42px] w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-xs text-neutral-100 focus:outline-none focus:border-cyan-400 disabled:opacity-60"
                 />
               </div>
 
@@ -1208,7 +1421,7 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                     disabled={!canEditAllFieldsOfTask(editingTask)}
                     value={editingTask.requestedBy}
                     onChange={(e) => setEditingTask({ ...editingTask, requestedBy: e.target.value as TaskRequester })}
-                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-neutral-200 focus:outline-none disabled:opacity-60"
+                    className="min-h-[42px] w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-neutral-200 focus:outline-none disabled:opacity-60"
                   >
                     <option value="Coty">👑 Coty (Reportes & Dirección)</option>
                     <option value="Yasmín">👗 Yasmín (Operatividad & Clientes)</option>
@@ -1227,7 +1440,7 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                     disabled={!canEditAllFieldsOfTask(editingTask)}
                     value={editingTask.module}
                     onChange={(e) => setEditingTask({ ...editingTask, module: e.target.value })}
-                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-neutral-100 focus:outline-none disabled:opacity-60"
+                    className="min-h-[42px] w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-neutral-100 focus:outline-none disabled:opacity-60"
                   />
                 </div>
               </div>
@@ -1241,7 +1454,7 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                     disabled={!canEditAllFieldsOfTask(editingTask)}
                     value={editingTask.priority}
                     onChange={(e) => setEditingTask({ ...editingTask, priority: e.target.value as TaskPriority })}
-                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-neutral-200 focus:outline-none disabled:opacity-60"
+                    className="min-h-[42px] w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-neutral-200 focus:outline-none disabled:opacity-60"
                   >
                     <option value="urgente">🔴 Urgente</option>
                     <option value="alta">🟡 Alta</option>
@@ -1259,7 +1472,7 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                     required
                     value={editingTask.deadline}
                     onChange={(e) => setEditingTask({ ...editingTask, deadline: e.target.value })}
-                    className="w-full bg-neutral-950 border border-cyan-500/50 rounded-xl px-3 py-2 text-xs text-neutral-100 focus:outline-none"
+                    className="min-h-[42px] w-full bg-neutral-950 border border-cyan-500/50 rounded-xl px-3 py-2 text-xs text-neutral-100 focus:outline-none"
                   />
                 </div>
 
@@ -1270,7 +1483,7 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                   <select
                     value={editingTask.status}
                     onChange={(e) => setEditingTask({ ...editingTask, status: e.target.value as TaskStatus })}
-                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-neutral-200 focus:outline-none"
+                    className="min-h-[42px] w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-neutral-200 focus:outline-none"
                   >
                     <option value="finalizado">✅ Finalizado (LISTO)</option>
                     <option value="en_curso">🔵 En Curso</option>
@@ -1295,17 +1508,17 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                 />
               </div>
 
-              <div className="pt-3 border-t border-neutral-800 flex items-center justify-end gap-3">
+              <div className="pt-3 border-t border-neutral-800 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 sm:gap-3">
                 <button
                   type="button"
                   onClick={() => setEditingTask(null)}
-                  className="px-4 py-2 rounded-xl bg-neutral-800 text-neutral-300 text-xs hover:bg-neutral-700 transition-colors cursor-pointer"
+                  className="min-h-[44px] sm:min-h-0 px-4 py-2 rounded-xl bg-neutral-800 text-neutral-300 text-xs hover:bg-neutral-700 transition-colors cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-600 text-neutral-950 font-bold text-xs shadow-md shadow-cyan-500/20 hover:brightness-110 transition-all cursor-pointer"
+                  className="min-h-[44px] sm:min-h-0 px-5 py-2 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-600 text-neutral-950 font-bold text-xs shadow-md shadow-cyan-500/20 hover:brightness-110 transition-all cursor-pointer"
                 >
                   Guardar Cambios
                 </button>

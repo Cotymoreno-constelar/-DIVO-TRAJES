@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   Sparkles, 
   MapPin, 
@@ -166,66 +166,71 @@ export const PaperInspector: React.FC = () => {
   const [selectedHotspot, setSelectedHotspot] = useState<Hotspot>(PAPER_HOTSPOTS[5]); // Default to Web
   const [zoomLevel, setZoomLevel] = useState<number>(1);
   const [filterType, setFilterType] = useState<string>('all');
+  const decodingRef = useRef<HTMLDivElement>(null);
 
   const filteredHotspots = PAPER_HOTSPOTS.filter(h => {
     if (filterType === 'all') return true;
     return h.category === filterType;
   });
 
+  const scrollToDecoding = () => {
+    decodingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   return (
     <div className="space-y-6">
       {/* Intro Box */}
-      <div className="p-5 rounded-2xl bg-neutral-900/60 border border-neutral-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="p-4 sm:p-5 rounded-2xl bg-neutral-900/60 border border-neutral-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0" />
             <h2 className="font-serif text-xl sm:text-2xl text-amber-100 font-semibold">
               Del Papel al Ecosistema Digital de DIVO
             </h2>
           </div>
           <p className="text-xs sm:text-sm text-neutral-400 mt-1 max-w-3xl">
-            Acá podés explorar la fotografía del boceto original que dibujaste a mano. Hacé clic sobre los pines interactivos para ver cómo cada nota, flecha y nombre se transforma en un módulo operativo para tu web y tu equipo.
+            Acá podés explorar la fotografía del boceto original que dibujaste a mano. Tocá los pines interactivos para ver cómo cada nota, flecha y nombre se transforma en un módulo operativo para tu web y tu equipo.
           </p>
         </div>
 
         {/* Category filters */}
-        <div className="flex flex-wrap items-center gap-1.5 bg-neutral-950 p-1.5 rounded-xl border border-neutral-800 text-xs">
+        <div className="flex items-center gap-1.5 bg-neutral-950 p-1.5 rounded-xl border border-neutral-800 text-xs overflow-x-auto scrollbar-none max-w-full">
           <button
             onClick={() => setFilterType('all')}
-            className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
-              filterType === 'all' ? 'bg-amber-500/20 text-amber-200' : 'text-neutral-400 hover:text-white'
+            className={`px-3 py-1.5 min-h-[36px] rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
+              filterType === 'all' ? 'bg-amber-500/20 text-amber-200 font-medium' : 'text-neutral-400 hover:text-white'
             }`}
           >
             Todos ({PAPER_HOTSPOTS.length})
           </button>
           <button
             onClick={() => setFilterType('systems')}
-            className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
-              filterType === 'systems' ? 'bg-amber-500/20 text-amber-200' : 'text-neutral-400 hover:text-white'
+            className={`px-3 py-1.5 min-h-[36px] rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
+              filterType === 'systems' ? 'bg-amber-500/20 text-amber-200 font-medium' : 'text-neutral-400 hover:text-white'
             }`}
           >
             Sistemas & CRM
           </button>
           <button
             onClick={() => setFilterType('paid')}
-            className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
-              filterType === 'paid' ? 'bg-amber-500/20 text-amber-200' : 'text-neutral-400 hover:text-white'
+            className={`px-3 py-1.5 min-h-[36px] rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
+              filterType === 'paid' ? 'bg-amber-500/20 text-amber-200 font-medium' : 'text-neutral-400 hover:text-white'
             }`}
           >
             Campañas
           </button>
           <button
             onClick={() => setFilterType('web')}
-            className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
-              filterType === 'web' ? 'bg-amber-500/20 text-amber-200' : 'text-neutral-400 hover:text-white'
+            className={`px-3 py-1.5 min-h-[36px] rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
+              filterType === 'web' ? 'bg-amber-500/20 text-amber-200 font-medium' : 'text-neutral-400 hover:text-white'
             }`}
           >
             Web
           </button>
           <button
             onClick={() => setFilterType('branches')}
-            className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
-              filterType === 'branches' ? 'bg-amber-500/20 text-amber-200' : 'text-neutral-400 hover:text-white'
+            className={`px-3 py-1.5 min-h-[36px] rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
+              filterType === 'branches' ? 'bg-amber-500/20 text-amber-200 font-medium' : 'text-neutral-400 hover:text-white'
             }`}
           >
             Sucursales
@@ -241,40 +246,40 @@ export const PaperInspector: React.FC = () => {
           <div className="relative rounded-2xl overflow-hidden border border-neutral-800 bg-neutral-950 shadow-2xl group select-none">
             
             {/* Zoom Controls Bar */}
-            <div className="absolute top-3 right-3 z-30 flex items-center gap-1.5 bg-neutral-900/90 backdrop-blur-md p-1.5 rounded-xl border border-neutral-700/80 shadow-lg text-xs">
+            <div className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 z-30 flex items-center gap-1 bg-neutral-900/90 backdrop-blur-md p-1 rounded-xl border border-neutral-700/80 shadow-lg text-xs">
               <button
                 onClick={() => setZoomLevel(prev => Math.min(prev + 0.25, 2))}
-                className="p-1 rounded-lg text-neutral-300 hover:text-amber-300 hover:bg-neutral-800 transition-colors cursor-pointer"
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-neutral-300 hover:text-amber-300 hover:bg-neutral-800 transition-colors cursor-pointer"
                 title="Acercar zoom"
               >
                 <ZoomIn className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setZoomLevel(prev => Math.max(prev - 0.25, 1))}
-                className="p-1 rounded-lg text-neutral-300 hover:text-amber-300 hover:bg-neutral-800 transition-colors cursor-pointer"
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-neutral-300 hover:text-amber-300 hover:bg-neutral-800 transition-colors cursor-pointer"
                 title="Alejar zoom"
               >
                 <ZoomOut className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setZoomLevel(1)}
-                className="p-1 rounded-lg text-neutral-300 hover:text-amber-300 hover:bg-neutral-800 transition-colors cursor-pointer"
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-neutral-300 hover:text-amber-300 hover:bg-neutral-800 transition-colors cursor-pointer"
                 title="Restablecer"
               >
                 <RotateCcw className="w-4 h-4" />
               </button>
-              <span className="text-[10px] text-neutral-400 font-mono px-1">
+              <span className="text-[10px] text-neutral-400 font-mono px-1.5">
                 {Math.round(zoomLevel * 100)}%
               </span>
             </div>
 
-            {/* Hint overlay */}
-            <div className="absolute bottom-3 left-3 z-30 pointer-events-none bg-neutral-950/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-neutral-800 text-[11px] text-amber-200">
+            {/* Hint overlay on sm+ (hidden on small mobile so bottom pins stay 100% unobstructed) */}
+            <div className="hidden sm:block absolute bottom-3 left-3 z-30 pointer-events-none bg-neutral-950/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-neutral-800 text-[11px] text-amber-200">
               💡 Tocá los pines circulares para decodificar cada anotación del papel
             </div>
 
             {/* The Image Canvas */}
-            <div className="relative overflow-auto max-h-[640px] flex items-center justify-center bg-neutral-950 p-2">
+            <div className="relative overflow-auto max-h-[640px] flex items-center justify-center bg-neutral-950 p-1.5 sm:p-2">
               <div 
                 className="relative transition-transform duration-300 ease-out origin-top-left"
                 style={{ transform: `scale(${zoomLevel})` }}
@@ -292,13 +297,14 @@ export const PaperInspector: React.FC = () => {
                     <button
                       key={hs.id}
                       onClick={() => setSelectedHotspot(hs)}
+                      aria-label={hs.title}
                       style={{
                         top: `${hs.yPercent}%`,
                         left: `${hs.xPercent}%`,
                         transform: 'translate(-50%, -50%)'
                       }}
-                      className={`absolute z-20 group/pin cursor-pointer transition-all duration-200 ${
-                        isSelected ? 'scale-125 z-30' : 'hover:scale-110'
+                      className={`absolute z-20 group/pin cursor-pointer transition-all duration-200 w-9 h-9 sm:w-8 sm:h-8 flex items-center justify-center ${
+                        isSelected ? 'scale-115 z-30' : 'hover:scale-110'
                       }`}
                     >
                       <div className="relative flex items-center justify-center">
@@ -328,13 +334,36 @@ export const PaperInspector: React.FC = () => {
 
           </div>
 
+          {/* Mobile active pin bar (unobtrusive caption + quick scroll to decoding) */}
+          <div className="lg:hidden flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl bg-amber-950/30 border border-amber-500/30 text-xs">
+            <div className="min-w-0">
+              <span className="text-[10px] uppercase tracking-wider text-amber-400 font-semibold block">
+                Pin seleccionado:
+              </span>
+              <span className="font-serif font-bold text-amber-100 truncate block">
+                {selectedHotspot.title}
+              </span>
+            </div>
+            <button
+              onClick={scrollToDecoding}
+              className="px-3 py-1.5 min-h-[36px] rounded-lg bg-amber-500/20 text-amber-200 border border-amber-400/40 text-[11px] font-semibold shrink-0 cursor-pointer"
+            >
+              Ver explicación ↓
+            </button>
+          </div>
+
           {/* Quick list of annotations below the viewer */}
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5 sm:gap-2">
             {PAPER_HOTSPOTS.map(hs => (
               <button
                 key={hs.id}
-                onClick={() => setSelectedHotspot(hs)}
-                className={`text-xs px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
+                onClick={() => {
+                  setSelectedHotspot(hs);
+                  if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+                    setTimeout(scrollToDecoding, 50);
+                  }
+                }}
+                className={`text-xs px-3 py-1.5 min-h-[36px] rounded-lg border transition-all cursor-pointer ${
                   selectedHotspot.id === hs.id
                     ? 'bg-amber-500/20 text-amber-200 border-amber-400 font-medium'
                     : 'bg-neutral-900/60 text-neutral-400 border-neutral-800 hover:border-neutral-700'
@@ -347,12 +376,16 @@ export const PaperInspector: React.FC = () => {
         </div>
 
         {/* Right Column: Decoding Panel (5 cols) */}
-        <div className="lg:col-span-5 xl:col-span-4 space-y-4">
-          <div className="rounded-2xl bg-neutral-900/90 border border-amber-500/30 p-5 shadow-2xl space-y-5">
+        <div
+          ref={decodingRef}
+          id="paper-decoding-panel"
+          className="lg:col-span-5 xl:col-span-4 space-y-4 scroll-mt-20"
+        >
+          <div className="rounded-2xl bg-neutral-900/90 border border-amber-500/30 p-4 sm:p-5 shadow-2xl space-y-5">
             
             {/* Hotspot Header */}
             <div>
-              <div className="flex items-center justify-between text-xs text-neutral-400 mb-1">
+              <div className="flex flex-wrap items-center justify-between gap-1.5 text-xs text-neutral-400 mb-1.5">
                 <span className="uppercase tracking-wider font-semibold text-amber-400 text-[10px]">
                   Decodificación Estratégica
                 </span>
@@ -360,7 +393,7 @@ export const PaperInspector: React.FC = () => {
                   Responsable: {selectedHotspot.responsible}
                 </span>
               </div>
-              <h3 className="font-serif text-2xl font-bold text-amber-100">
+              <h3 className="font-serif text-xl sm:text-2xl font-bold text-amber-100">
                 {selectedHotspot.title}
               </h3>
             </div>

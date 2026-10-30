@@ -29,10 +29,10 @@ export const PrintableWorkPlan: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Top Banner with Print Button (Hidden on Print) */}
-      <div className="p-5 rounded-2xl bg-neutral-900/60 border border-neutral-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 no-print shadow-xl">
+      <div className="p-4 sm:p-5 rounded-2xl bg-neutral-900/60 border border-neutral-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 no-print shadow-xl">
         <div>
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0" />
             <h2 className="font-serif text-xl sm:text-2xl text-amber-100 font-semibold">
               Papel de Trabajo & Plan de Acción Imprimible
             </h2>
@@ -44,7 +44,7 @@ export const PrintableWorkPlan: React.FC = () => {
 
         <button
           onClick={handlePrint}
-          className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-neutral-950 font-bold text-xs shadow-lg shadow-amber-500/20 hover:from-amber-400 hover:to-amber-500 transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0"
+          className="w-full sm:w-auto px-5 py-2.5 min-h-[44px] rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-neutral-950 font-bold text-xs shadow-lg shadow-amber-500/20 hover:from-amber-400 hover:to-amber-500 transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0"
         >
           <Printer className="w-4 h-4" />
           <span>Imprimir / Guardar PDF</span>
@@ -52,15 +52,15 @@ export const PrintableWorkPlan: React.FC = () => {
       </div>
 
       {/* The Printable Document Container */}
-      <div className="p-8 sm:p-12 rounded-3xl bg-neutral-900/90 border border-neutral-800 text-neutral-100 shadow-2xl space-y-8 max-w-5xl mx-auto print:bg-white print:text-black print:border-none print:p-0 print:shadow-none">
+      <div className="p-4 sm:p-8 lg:p-12 rounded-2xl sm:rounded-3xl bg-neutral-900/90 border border-neutral-800 text-neutral-100 shadow-2xl space-y-6 sm:space-y-8 max-w-5xl mx-auto print:bg-white print:text-black print:border-none print:p-0 print:shadow-none">
         
         {/* Document Header */}
-        <div className="border-b border-amber-500/30 print:border-black/30 pb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div className="border-b border-amber-500/30 print:border-black/30 pb-5 sm:pb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 text-amber-400 print:text-amber-800 font-serif tracking-[0.3em] uppercase text-xs font-bold mb-1">
+            <div className="flex items-center gap-2 text-amber-400 print:text-amber-800 font-serif tracking-[0.2em] sm:tracking-[0.3em] uppercase text-[11px] sm:text-xs font-bold mb-1">
               ✨ DIVO · ALTA COSTURA & SASTRERÍA
             </div>
-            <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-neutral-100 print:text-black">
+            <h1 className="font-serif text-2xl sm:text-4xl font-bold tracking-tight text-neutral-100 print:text-black">
               Plan Maestro de Flujograma Operativo
             </h1>
             <p className="text-xs sm:text-sm text-neutral-400 print:text-neutral-700 mt-1 font-sans">
@@ -176,7 +176,7 @@ export const PrintableWorkPlan: React.FC = () => {
             4. Despliegue de Ateliers y Puntos de Atención
           </h3>
 
-          <div className="grid grid-cols-1 sm:grid-cols-5 gap-2 text-xs">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 print:grid-cols-5 gap-2 text-xs">
             {BRANCH_LOCATIONS.map(b => (
               <div key={b.id} className="p-2.5 rounded-xl bg-neutral-950 print:bg-white print:border print:border-neutral-300 border border-neutral-800">
                 <span className="font-serif font-bold text-amber-300 print:text-black text-sm">{b.code}</span>
@@ -190,35 +190,35 @@ export const PrintableWorkPlan: React.FC = () => {
         {/* 5. CHECKLIST DE ACTIVACIÓN INMEDIATA */}
         <div className="space-y-3 pt-2 border-t border-neutral-800 print:border-black/20">
           <h3 className="font-serif text-lg font-bold text-amber-200 print:text-black flex items-center gap-2">
-            <CheckSquare className="w-4 h-4 text-amber-400 print:text-black" />
+            <CheckSquare className="w-4 h-4 text-amber-400 print:text-black shrink-0" />
             <span>5. Checklist de Puesta en Marcha (Próximos 14 Días)</span>
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs text-neutral-300 print:text-black">
-            <div className="flex items-start gap-2 p-2.5 rounded-lg bg-neutral-950 print:bg-white print:border print:border-neutral-200 border border-neutral-800">
-              <input type="checkbox" className="mt-0.5" defaultChecked />
+            <label className="flex items-start gap-2.5 p-3 rounded-lg bg-neutral-950 print:bg-white print:border print:border-neutral-200 border border-neutral-800 cursor-pointer">
+              <input type="checkbox" className="w-4 h-4 mt-0.5 shrink-0 accent-amber-400" defaultChecked />
               <span>Publicar arquitectura web con bifurcación limpia Trajes / Vestidos.</span>
-            </div>
-            <div className="flex items-start gap-2 p-2.5 rounded-lg bg-neutral-950 print:bg-white print:border print:border-neutral-200 border border-neutral-800">
-              <input type="checkbox" className="mt-0.5" defaultChecked />
+            </label>
+            <label className="flex items-start gap-2.5 p-3 rounded-lg bg-neutral-950 print:bg-white print:border print:border-neutral-200 border border-neutral-800 cursor-pointer">
+              <input type="checkbox" className="w-4 h-4 mt-0.5 shrink-0 accent-amber-400" defaultChecked />
               <span>Vincular línea telefónica 931-EMMA-292745 en botones directos de llamada.</span>
-            </div>
-            <div className="flex items-start gap-2 p-2.5 rounded-lg bg-neutral-950 print:bg-white print:border print:border-neutral-200 border border-neutral-800">
-              <input type="checkbox" className="mt-0.5" />
+            </label>
+            <label className="flex items-start gap-2.5 p-3 rounded-lg bg-neutral-950 print:bg-white print:border print:border-neutral-200 border border-neutral-800 cursor-pointer">
+              <input type="checkbox" className="w-4 h-4 mt-0.5 shrink-0 accent-amber-400" />
               <span>Configurar embudo en Kommo para responder WhatsApps en menos de 3 minutos.</span>
-            </div>
-            <div className="flex items-start gap-2 p-2.5 rounded-lg bg-neutral-950 print:bg-white print:border print:border-neutral-200 border border-neutral-800">
-              <input type="checkbox" className="mt-0.5" />
+            </label>
+            <label className="flex items-start gap-2.5 p-3 rounded-lg bg-neutral-950 print:bg-white print:border print:border-neutral-200 border border-neutral-800 cursor-pointer">
+              <input type="checkbox" className="w-4 h-4 mt-0.5 shrink-0 accent-amber-400" />
               <span>Sincronizar reservas de prendas con el módulo de inventario de Sky Soft.</span>
-            </div>
-            <div className="flex items-start gap-2 p-2.5 rounded-lg bg-neutral-950 print:bg-white print:border print:border-neutral-200 border border-neutral-800">
-              <input type="checkbox" className="mt-0.5" />
+            </label>
+            <label className="flex items-start gap-2.5 p-3 rounded-lg bg-neutral-950 print:bg-white print:border print:border-neutral-200 border border-neutral-800 cursor-pointer">
+              <input type="checkbox" className="w-4 h-4 mt-0.5 shrink-0 accent-amber-400" />
               <span>Optimizar las 5 fichas de Google Maps con fotos 360° de los probadores.</span>
-            </div>
-            <div className="flex items-start gap-2 p-2.5 rounded-lg bg-neutral-950 print:bg-white print:border print:border-neutral-200 border border-neutral-800">
-              <input type="checkbox" className="mt-0.5" />
+            </label>
+            <label className="flex items-start gap-2.5 p-3 rounded-lg bg-neutral-950 print:bg-white print:border print:border-neutral-200 border border-neutral-800 cursor-pointer">
+              <input type="checkbox" className="w-4 h-4 mt-0.5 shrink-0 accent-amber-400" />
               <span>Activar protocolo de post-venta para pedir foto de la noche de gala a las 48h.</span>
-            </div>
+            </label>
           </div>
         </div>
 

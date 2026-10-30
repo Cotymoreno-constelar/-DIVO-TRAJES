@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   TEAM_MEMBERS, 
   BRANCH_LOCATIONS 
@@ -89,16 +89,26 @@ const RACI_DATA: RACIRow[] = [
 export const TeamWorkplan: React.FC = () => {
   const [selectedMember, setSelectedMember] = useState<TeamMember>(TEAM_MEMBERS[0]);
   const { syncMeetingDate, updateSyncMeetingDate } = useCloudSync();
+  const detailRef = useRef<HTMLDivElement>(null);
+
+  const handleSelectMember = (member: TeamMember) => {
+    setSelectedMember(member);
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      setTimeout(() => {
+        detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 60);
+    }
+  };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <CloudSyncBanner compact />
       {/* Intro Header */}
-      <div className="p-6 rounded-2xl bg-neutral-900/60 border border-neutral-800 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-xl">
+      <div className="p-4 sm:p-6 rounded-2xl bg-neutral-900/60 border border-neutral-800 flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6 shadow-xl">
         <div className="max-w-2xl">
           <div className="flex items-center gap-2 mb-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-            <h2 className="font-serif text-2xl sm:text-3xl font-semibold text-amber-100">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0" />
+            <h2 className="font-serif text-xl sm:text-3xl font-semibold text-amber-100">
               Organigrama y Matriz Operativa de Trabajo
             </h2>
           </div>
@@ -125,8 +135,8 @@ export const TeamWorkplan: React.FC = () => {
           return (
             <div
               key={member.id}
-              onClick={() => setSelectedMember(member)}
-              className={`p-5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-4 ${
+              onClick={() => handleSelectMember(member)}
+              className={`p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-4 ${
                 isSelected
                   ? 'bg-amber-950/40 border-amber-400 shadow-lg shadow-amber-500/10'
                   : 'bg-neutral-900/60 border-neutral-800 hover:border-neutral-700 hover:bg-neutral-900'
@@ -170,14 +180,17 @@ export const TeamWorkplan: React.FC = () => {
       </div>
 
       {/* Selected Member Detail Box */}
-      <div className="p-6 rounded-2xl bg-neutral-900/90 border border-amber-500/30 shadow-2xl space-y-4">
-        <div className="flex items-center justify-between border-b border-neutral-800 pb-4">
+      <div
+        ref={detailRef}
+        className="p-4 sm:p-6 rounded-2xl bg-neutral-900/90 border border-amber-500/30 shadow-2xl space-y-4 scroll-mt-20"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-800 pb-4">
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${selectedMember.avatarColor} flex items-center justify-center text-neutral-950 font-serif font-bold text-lg shadow-md`}>
+            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${selectedMember.avatarColor} flex items-center justify-center text-neutral-950 font-serif font-bold text-lg shadow-md shrink-0`}>
               {selectedMember.name.charAt(0)}
             </div>
             <div>
-              <h3 className="font-serif text-xl font-bold text-neutral-100">
+              <h3 className="font-serif text-lg sm:text-xl font-bold text-neutral-100">
                 Plan de Tareas Semanales para {selectedMember.name}
               </h3>
               <p className="text-xs text-neutral-400">
@@ -211,8 +224,8 @@ export const TeamWorkplan: React.FC = () => {
                 <span className="text-xs uppercase font-semibold text-neutral-300 tracking-wider block">
                   Ritual de Sincronización Semanal
                 </span>
-                <div className="flex items-center gap-1.5 bg-neutral-900 px-2 py-1 rounded-lg border border-neutral-700">
-                  <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                <div className="flex items-center gap-1.5 bg-neutral-900 px-2.5 py-1.5 min-h-[40px] rounded-lg border border-neutral-700 w-full sm:w-auto">
+                  <Calendar className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                   <input
                     type="date"
                     value={syncMeetingDate}
@@ -221,7 +234,7 @@ export const TeamWorkplan: React.FC = () => {
                         void updateSyncMeetingDate(e.target.value);
                       }
                     }}
-                    className="bg-transparent text-xs text-amber-300 font-mono focus:outline-none cursor-pointer"
+                    className="bg-transparent text-xs text-amber-300 font-mono focus:outline-none cursor-pointer flex-1 sm:flex-initial"
                     title="Modificar fecha del próximo ritual semanal (guardado en la nube)"
                   />
                 </div>
@@ -245,8 +258,8 @@ export const TeamWorkplan: React.FC = () => {
         </div>
       </div>
 
-      {/* RACI Matrix Table */}
-      <div className="p-6 rounded-2xl bg-neutral-900/60 border border-neutral-800 space-y-4">
+      {/* RACI Matrix Table & Mobile Cards */}
+      <div className="p-4 sm:p-6 rounded-2xl bg-neutral-900/60 border border-neutral-800 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <h3 className="font-serif text-lg font-bold text-neutral-100">
@@ -258,7 +271,49 @@ export const TeamWorkplan: React.FC = () => {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Mobile Stacked Cards (< md) */}
+        <div className="md:hidden space-y-3">
+          {RACI_DATA.map((row, idx) => (
+            <div key={idx} className="p-3.5 rounded-xl bg-neutral-950 border border-neutral-800 space-y-2.5 text-xs">
+              <div className="font-medium text-neutral-100 leading-snug">
+                {row.activity}
+              </div>
+              <div className="grid grid-cols-2 gap-2 pt-1 border-t border-neutral-800/80">
+                <div>
+                  <span className="text-[10px] uppercase tracking-wider text-neutral-500 block mb-0.5">
+                    R · Ejecuta
+                  </span>
+                  <span className="inline-block px-2 py-0.5 rounded bg-blue-500/15 text-blue-300 border border-blue-500/30 font-semibold text-[11px]">
+                    {row.responsible}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase tracking-wider text-neutral-500 block mb-0.5">
+                    A · Aprueba
+                  </span>
+                  <span className="inline-block px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 font-semibold text-[11px]">
+                    {row.accountable}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase tracking-wider text-neutral-500 block">
+                    C · Consultado
+                  </span>
+                  <span className="text-neutral-300 text-[11px]">{row.consulted}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase tracking-wider text-neutral-500 block">
+                    I · Informado
+                  </span>
+                  <span className="text-neutral-300 text-[11px]">{row.informed}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop Table (md+) */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-neutral-800 text-neutral-400 uppercase text-[10px] tracking-wider">

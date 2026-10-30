@@ -151,7 +151,7 @@ export const CloudSyncBanner: React.FC<CloudSyncBannerProps> = ({
       {/* Connected to Cloud State */}
       {user && memberRole ? (
         <div className="p-3.5 sm:px-5 rounded-2xl bg-emerald-950/25 border border-emerald-500/35 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-          <div className="flex items-start sm:items-center gap-3">
+          <div className="flex items-start sm:items-center gap-3 min-w-0">
             <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center shrink-0">
               {syncState === 'saving' || syncState === 'connecting' ? (
                 <RefreshCw className="w-4 h-4 text-emerald-300 animate-spin" />
@@ -159,10 +159,10 @@ export const CloudSyncBanner: React.FC<CloudSyncBannerProps> = ({
                 <Cloud className="w-4 h-4 text-emerald-300" />
               )}
             </div>
-            <div className="text-xs">
-              <div className="flex items-center gap-2 flex-wrap">
+            <div className="text-xs min-w-0">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                 <span className="font-semibold text-emerald-200 flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                   <span>
                     {syncState === 'saving'
                       ? 'Guardando cambios en la nube...'
@@ -191,21 +191,21 @@ export const CloudSyncBanner: React.FC<CloudSyncBannerProps> = ({
                 )}
               </div>
               {!compact && (
-                <p className="text-[11px] text-neutral-400 mt-0.5">
+                <p className="text-[11px] text-neutral-400 mt-0.5 leading-relaxed">
                   Cada modificación de fecha, estado, observación o nueva tarea queda guardada al instante para todos los dispositivos conectados.
                 </p>
               )}
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto shrink-0">
             {hasPendingLocalEdits && (
               <button
                 onClick={handlePushLocalEdits}
                 disabled={isUploadingLocal}
-                className="px-3 py-1.5 rounded-xl bg-amber-400 text-neutral-950 font-bold text-xs hover:brightness-110 transition-all flex items-center gap-1.5 cursor-pointer"
+                className="w-full sm:w-auto min-h-[40px] px-3 py-1.5 rounded-xl bg-amber-400 text-neutral-950 font-bold text-xs hover:brightness-110 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
               >
-                <Upload className="w-3.5 h-3.5" />
+                <Upload className="w-3.5 h-3.5 shrink-0" />
                 <span>
                   {isUploadingLocal
                     ? 'Subiendo...'
@@ -218,19 +218,19 @@ export const CloudSyncBanner: React.FC<CloudSyncBannerProps> = ({
               <>
                 <button
                   onClick={handleExportJson}
-                  className="px-2.5 py-1.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-300 border border-neutral-800 text-[11px] font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+                  className="flex-1 sm:flex-initial min-h-[40px] px-2.5 py-1.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-300 border border-neutral-800 text-[11px] font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap"
                   title="Descargar copia de respaldo en archivo .json"
                 >
-                  <Download className="w-3.5 h-3.5 text-cyan-400" />
+                  <Download className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
                   <span>Respaldo .json</span>
                 </button>
 
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="px-2.5 py-1.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-300 border border-neutral-800 text-[11px] font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+                  className="flex-1 sm:flex-initial min-h-[40px] px-2.5 py-1.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-300 border border-neutral-800 text-[11px] font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap"
                   title="Importar cambios desde un respaldo .json"
                 >
-                  <Upload className="w-3.5 h-3.5 text-amber-400" />
+                  <Upload className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                   <span>Importar .json</span>
                 </button>
               </>
@@ -238,10 +238,10 @@ export const CloudSyncBanner: React.FC<CloudSyncBannerProps> = ({
 
             <button
               onClick={signOutFromCloud}
-              className="px-2.5 py-1.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200 border border-neutral-800 text-[11px] flex items-center gap-1 transition-colors cursor-pointer"
+              className="min-h-[40px] px-2.5 py-1.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200 border border-neutral-800 text-[11px] flex items-center justify-center gap-1 transition-colors cursor-pointer"
               title="Cerrar sesión en la nube"
             >
-              <LogOut className="w-3.5 h-3.5" />
+              <LogOut className="w-3.5 h-3.5 shrink-0" />
               <span>Salir</span>
             </button>
           </div>
@@ -252,8 +252,8 @@ export const CloudSyncBanner: React.FC<CloudSyncBannerProps> = ({
           onSubmit={handleCodeSubmit}
           className="p-4 rounded-2xl bg-cyan-950/30 border border-cyan-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
         >
-          <div className="flex items-center gap-3 text-xs">
-            <KeyRound className="w-5 h-5 text-cyan-400 shrink-0" />
+          <div className="flex items-start sm:items-center gap-3 text-xs">
+            <KeyRound className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5 sm:mt-0" />
             <div>
               <span className="font-semibold text-cyan-200 block">
                 Vincular cuenta al Tablero Compartido DIVO
@@ -263,19 +263,19 @@ export const CloudSyncBanner: React.FC<CloudSyncBannerProps> = ({
               </span>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <input
               type="text"
               value={teamCodeInput}
               onChange={(e) => setTeamCodeInput(e.target.value)}
               placeholder="Ej: DIVO-OWL"
-              className={`px-3 py-1.5 rounded-xl bg-neutral-950 border text-xs font-mono text-neutral-100 w-36 focus:outline-none ${
+              className={`min-h-[42px] px-3 py-1.5 rounded-xl bg-neutral-950 border text-xs font-mono text-neutral-100 flex-1 sm:w-36 focus:outline-none ${
                 codeError ? 'border-red-500' : 'border-cyan-500/40'
               }`}
             />
             <button
               type="submit"
-              className="px-3.5 py-1.5 rounded-xl bg-cyan-400 text-neutral-950 font-bold text-xs cursor-pointer"
+              className="min-h-[42px] px-4 py-1.5 rounded-xl bg-cyan-400 text-neutral-950 font-bold text-xs cursor-pointer shrink-0"
             >
               Conectar
             </button>
@@ -283,7 +283,7 @@ export const CloudSyncBanner: React.FC<CloudSyncBannerProps> = ({
         </form>
       ) : (
         /* Not Signed In Yet — Local Browser Mode with 1-Click Cloud Activation */
-        <div className="p-4 sm:px-5 rounded-2xl bg-amber-950/25 border border-amber-500/35 flex flex-col lg:flex-row lg:items-center justify-between gap-3.5">
+        <div className="p-3.5 sm:p-4 sm:px-5 rounded-2xl bg-amber-950/25 border border-amber-500/35 flex flex-col lg:flex-row lg:items-center justify-between gap-3.5">
           <div className="flex items-start sm:items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-400/35 flex items-center justify-center shrink-0">
               <CloudOff className="w-4 h-4 text-amber-300" />
@@ -300,40 +300,40 @@ export const CloudSyncBanner: React.FC<CloudSyncBannerProps> = ({
               <p className="text-[11px] text-neutral-300 mt-0.5 leading-relaxed">
                 Para que las modificaciones hechas en el link{' '}
                 <strong className="text-amber-200 font-semibold">queden guardadas en la nube</strong>{' '}
-                y las vean tanto vos como Víctor en cualquier PC, conectá con Google. Tus cambios actuales en pantalla se conservan y suben automáticamente.
+                y las vean tanto vos como Víctor en cualquier PC o celular, conectá con Google. Tus cambios actuales se conservan y suben automáticamente.
               </p>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto shrink-0">
             <button
               onClick={signInToCloud}
-              className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-neutral-950 font-bold text-xs shadow-lg shadow-amber-500/20 hover:brightness-110 transition-all flex items-center gap-2 cursor-pointer"
+              className="w-full sm:w-auto min-h-[44px] px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-neutral-950 font-bold text-xs shadow-lg shadow-amber-500/20 hover:brightness-110 transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
-              <Cloud className="w-4 h-4" />
+              <Cloud className="w-4 h-4 shrink-0" />
               <span>Conectar Google y Guardar en la Nube</span>
             </button>
 
             {!compact && (
-              <>
+              <div className="flex items-center gap-2 w-full sm:w-auto">
                 <button
                   onClick={handleExportJson}
-                  className="px-2.5 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-300 border border-neutral-800 text-[11px] font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+                  className="flex-1 sm:flex-initial min-h-[40px] px-2.5 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-300 border border-neutral-800 text-[11px] font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap"
                   title="Descargar las modificaciones actuales de este navegador en un archivo .json"
                 >
-                  <Download className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>Descargar cambios (.json)</span>
+                  <Download className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                  <span>Descargar (.json)</span>
                 </button>
 
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="px-2.5 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-300 border border-neutral-800 text-[11px] font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+                  className="flex-1 sm:flex-initial min-h-[40px] px-2.5 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-300 border border-neutral-800 text-[11px] font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap"
                   title="Cargar un archivo .json descargado desde otro link o PC"
                 >
-                  <Upload className="w-3.5 h-3.5 text-amber-400" />
+                  <Upload className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                   <span>Importar (.json)</span>
                 </button>
-              </>
+              </div>
             )}
           </div>
         </div>
@@ -341,16 +341,16 @@ export const CloudSyncBanner: React.FC<CloudSyncBannerProps> = ({
 
       {/* Helpful Domain Guidance if opened on an external domain (e.g. Vercel) not yet added in Firebase Auth */}
       {unauthorizedDomain && (
-        <div className="p-4 rounded-2xl bg-red-950/30 border border-red-500/40 text-xs space-y-2">
-          <div className="flex items-center gap-2 font-semibold text-red-200">
-            <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
-            <span>
-              Falta autorizar el dominio <code className="font-mono text-amber-300">{unauthorizedDomain}</code> en Firebase Auth (solo se hace 1 vez)
+        <div className="p-3.5 sm:p-4 rounded-2xl bg-red-950/30 border border-red-500/40 text-xs space-y-2.5">
+          <div className="flex items-start gap-2 font-semibold text-red-200">
+            <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+            <span className="leading-snug">
+              Falta autorizar el dominio <code className="font-mono text-amber-300 break-all">{unauthorizedDomain}</code> en Firebase Auth (solo se hace 1 vez)
             </span>
           </div>
           <p className="text-[11px] text-neutral-300 leading-relaxed">
             Como estás abriendo la app desde un dominio externo (por ejemplo Vercel), agregá{' '}
-            <strong className="font-mono text-white">{unauthorizedDomain}</strong> en{' '}
+            <strong className="font-mono text-white break-all">{unauthorizedDomain}</strong> en{' '}
             <a
               href={`https://console.firebase.google.com/project/${FIREBASE_PROJECT_ID}/authentication/settings`}
               target="_blank"
@@ -363,17 +363,17 @@ export const CloudSyncBanner: React.FC<CloudSyncBannerProps> = ({
           </p>
           <button
             onClick={handleCopyHostname}
-            className="px-3 py-1 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-neutral-200 border border-neutral-700 text-[11px] font-mono inline-flex items-center gap-1.5 cursor-pointer"
+            className="w-full sm:w-auto min-h-[40px] px-3 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-neutral-200 border border-neutral-700 text-[11px] font-mono inline-flex items-center justify-center gap-1.5 cursor-pointer break-all"
           >
             {copiedDomain ? (
               <>
-                <Check className="w-3.5 h-3.5 text-emerald-400" />
+                <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                 <span>Dominio copiado</span>
               </>
             ) : (
               <>
-                <Copy className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Copiar {unauthorizedDomain}</span>
+                <Copy className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                <span className="truncate">Copiar {unauthorizedDomain}</span>
               </>
             )}
           </button>

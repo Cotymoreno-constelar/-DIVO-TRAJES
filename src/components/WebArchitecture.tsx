@@ -28,13 +28,13 @@ export const WebArchitecture: React.FC = () => {
   const [appointmentStep, setAppointmentStep] = useState<number>(1);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       {/* Hero Presentation */}
-      <div className="p-6 rounded-2xl bg-neutral-900/60 border border-neutral-800 flex flex-col lg:flex-row lg:items-center justify-between gap-6 shadow-xl">
+      <div className="p-4 sm:p-6 rounded-2xl bg-neutral-900/60 border border-neutral-800 flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-6 shadow-xl">
         <div className="max-w-3xl">
           <div className="flex items-center gap-2 mb-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-            <h2 className="font-serif text-2xl sm:text-3xl font-semibold text-amber-100">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0" />
+            <h2 className="font-serif text-xl sm:text-3xl font-semibold text-amber-100">
               Arquitectura de Información Web DIVO
             </h2>
           </div>
@@ -109,8 +109,8 @@ export const WebArchitecture: React.FC = () => {
           </div>
 
           {/* Detailed UX Writing Sheet for Selected Section */}
-          <div className="p-5 rounded-2xl bg-neutral-900/90 border border-amber-500/30 space-y-4 shadow-xl">
-            <div className="flex items-center justify-between border-b border-neutral-800 pb-3">
+          <div className="p-4 sm:p-5 rounded-2xl bg-neutral-900/90 border border-amber-500/30 space-y-4 shadow-xl">
+            <div className="flex flex-wrap items-center justify-between gap-1.5 border-b border-neutral-800 pb-3">
               <span className="text-xs font-semibold uppercase text-amber-400 tracking-wider">
                 Ficha de UX Writing
               </span>
@@ -146,7 +146,7 @@ export const WebArchitecture: React.FC = () => {
             </div>
 
             {/* CTAs */}
-            <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
               <div className="p-2.5 rounded-lg bg-neutral-950 border border-neutral-800">
                 <span className="text-[10px] text-amber-300 font-semibold uppercase block mb-1">Botón Primario (CTA):</span>
                 <span className="font-medium text-amber-200">"{selectedSection.uxWriting.primaryCta}"</span>
@@ -169,11 +169,11 @@ export const WebArchitecture: React.FC = () => {
 
         {/* Right: Live Interactive Mockup / Wireframe Simulator (7 cols) */}
         <div className="lg:col-span-7 space-y-4">
-          <div className="flex items-center justify-between text-xs text-neutral-400">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-neutral-400">
             <span className="uppercase tracking-wider font-semibold text-neutral-300">
               Prototipo Interactivo de la Experiencia Web
             </span>
-            <div className="flex items-center gap-1 bg-neutral-900 px-2 py-1 rounded-lg border border-neutral-800">
+            <div className="flex items-center gap-1.5 bg-neutral-900 px-2.5 py-1 rounded-lg border border-neutral-800">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span>Simulación en Vivo</span>
             </div>
@@ -183,47 +183,47 @@ export const WebArchitecture: React.FC = () => {
           <div className="rounded-2xl border border-neutral-800 bg-neutral-950 shadow-2xl overflow-hidden ring-1 ring-white/5">
             
             {/* Browser top chrome */}
-            <div className="px-4 py-2.5 bg-neutral-900 border-b border-neutral-800 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-1.5">
+            <div className="px-3 sm:px-4 py-2.5 bg-neutral-900 border-b border-neutral-800 flex items-center justify-between gap-2 sm:gap-4">
+              <div className="flex items-center gap-1.5 shrink-0">
                 <span className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
                 <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
               </div>
-              <div className="flex-1 max-w-sm px-3 py-1 rounded-md bg-neutral-950 text-neutral-400 text-[11px] font-mono text-center truncate border border-neutral-800">
+              <div className="flex-1 max-w-sm px-2.5 py-1 rounded-md bg-neutral-950 text-neutral-400 text-[11px] font-mono text-center truncate border border-neutral-800">
                 divo.com.ar{selectedSection.path}
               </div>
-              <div className="text-[11px] text-amber-300 font-serif font-bold">
+              <div className="text-[11px] text-amber-300 font-serif font-bold shrink-0">
                 DIVO
               </div>
             </div>
 
             {/* Mockup Navbar */}
-            <div className="px-6 py-3.5 bg-neutral-950/90 border-b border-neutral-800/80 flex items-center justify-between text-xs">
+            <div className="px-3.5 sm:px-6 py-3 bg-neutral-950/90 border-b border-neutral-800/80 flex items-center justify-between gap-2 text-xs">
               <div className="flex items-center gap-6">
                 <span className="font-serif tracking-widest font-bold text-amber-200 text-sm">
                   DIVO
                 </span>
-                <nav className="hidden sm:flex items-center gap-4 text-neutral-400 text-[11px]">
+                <nav className="hidden md:flex items-center gap-4 text-neutral-400 text-[11px]">
                   <span className="text-amber-300 font-medium">Vestidos de Novia & Gala</span>
                   <span>Trajes & Sastrería</span>
                   <span>Ateliers (5 Sedes)</span>
                   <span>Manifiesto de Luz</span>
                 </nav>
               </div>
-              <button className="px-3 py-1.5 rounded-full bg-amber-500/10 text-amber-200 border border-amber-500/40 font-medium hover:bg-amber-500/20 text-[11px]">
+              <button className="px-3 py-1.5 min-h-[36px] rounded-full bg-amber-500/10 text-amber-200 border border-amber-500/40 font-medium hover:bg-amber-500/20 text-[11px] shrink-0">
                 Agendar Cita VIP
               </button>
             </div>
 
             {/* Mockup Dynamic Content */}
-            <div className="p-6 sm:p-8 space-y-8 bg-gradient-to-b from-neutral-950 via-neutral-900/50 to-neutral-950">
+            <div className="p-4 sm:p-8 space-y-6 sm:space-y-8 bg-gradient-to-b from-neutral-950 via-neutral-900/50 to-neutral-950">
               
               {/* Dual Hero Banner */}
               <div className="text-center space-y-3 max-w-xl mx-auto">
-                <span className="text-[10px] uppercase tracking-[0.25em] font-semibold text-amber-400 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30">
+                <span className="inline-block text-[10px] uppercase tracking-[0.2em] sm:tracking-[0.25em] font-semibold text-amber-400 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30">
                   Alta Costura · Sastrería · Celebración
                 </span>
-                <h1 className="font-serif text-3xl sm:text-4xl font-bold text-neutral-100 leading-tight">
+                <h1 className="font-serif text-2xl sm:text-4xl font-bold text-neutral-100 leading-tight">
                   {selectedSection.uxWriting.heroHeading}
                 </h1>
                 <p className="text-xs sm:text-sm text-neutral-300 leading-relaxed font-sans">
@@ -231,13 +231,13 @@ export const WebArchitecture: React.FC = () => {
                 </p>
                 
                 {/* CTA Action Bar */}
-                <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
-                  <button className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 text-neutral-950 font-semibold text-xs shadow-lg shadow-amber-500/20 hover:brightness-110 transition-all flex items-center gap-1.5 cursor-pointer">
+                <div className="pt-2 flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-center gap-2.5 sm:gap-3">
+                  <button className="px-5 py-2.5 min-h-[42px] rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 text-neutral-950 font-semibold text-xs shadow-lg shadow-amber-500/20 hover:brightness-110 transition-all flex items-center justify-center gap-1.5 cursor-pointer">
                     <span>{selectedSection.uxWriting.primaryCta}</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
+                    <ArrowRight className="w-3.5 h-3.5 shrink-0" />
                   </button>
                   {selectedSection.uxWriting.secondaryCta && (
-                    <button className="px-4 py-2.5 rounded-xl bg-neutral-900 border border-neutral-700 text-neutral-200 text-xs hover:bg-neutral-800 transition-all cursor-pointer">
+                    <button className="px-4 py-2.5 min-h-[42px] rounded-xl bg-neutral-900 border border-neutral-700 text-neutral-200 text-xs hover:bg-neutral-800 transition-all cursor-pointer">
                       {selectedSection.uxWriting.secondaryCta}
                     </button>
                   )}
@@ -320,10 +320,10 @@ export const WebArchitecture: React.FC = () => {
               </div>
 
               {/* Interactive Booking Module Mockup (Crucial for CRM link) */}
-              <div className="p-5 rounded-2xl bg-neutral-950 border border-neutral-800 space-y-4">
-                <div className="flex items-center justify-between">
+              <div className="p-4 sm:p-5 rounded-2xl bg-neutral-950 border border-neutral-800 space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-1.5">
                   <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-amber-400" />
+                    <Calendar className="w-4 h-4 text-amber-400 shrink-0" />
                     <span className="font-serif font-bold text-neutral-200 text-sm">
                       Módulo de Agendamiento VIP (Conexión Kommo + Owl)
                     </span>
@@ -338,7 +338,7 @@ export const WebArchitecture: React.FC = () => {
                     <label className="text-[10px] uppercase text-neutral-400 block mb-1">
                       1. ¿Qué buscás?
                     </label>
-                    <select className="w-full bg-neutral-900 border border-neutral-800 rounded-lg p-2 text-neutral-200 text-xs">
+                    <select className="w-full min-h-[42px] bg-neutral-900 border border-neutral-800 rounded-lg px-2.5 py-2 text-neutral-200 text-xs">
                       <option>👗 Vestido de Fiesta / Gala</option>
                       <option>👰 Vestido de Novia</option>
                       <option>👔 Traje de Novio / Black Tie</option>
@@ -353,7 +353,7 @@ export const WebArchitecture: React.FC = () => {
                     <select 
                       value={selectedBranchForDemo}
                       onChange={(e) => setSelectedBranchForDemo(e.target.value)}
-                      className="w-full bg-neutral-900 border border-neutral-800 rounded-lg p-2 text-neutral-200 text-xs"
+                      className="w-full min-h-[42px] bg-neutral-900 border border-neutral-800 rounded-lg px-2.5 py-2 text-neutral-200 text-xs"
                     >
                       {BRANCH_LOCATIONS.map(b => (
                         <option key={b.code} value={b.code}>
@@ -370,17 +370,17 @@ export const WebArchitecture: React.FC = () => {
                     <input 
                       type="date" 
                       defaultValue="2026-11-20"
-                      className="w-full bg-neutral-900 border border-neutral-800 rounded-lg p-2 text-neutral-200 text-xs"
+                      className="w-full min-h-[42px] bg-neutral-900 border border-neutral-800 rounded-lg px-2.5 py-2 text-neutral-200 text-xs"
                     />
                   </div>
                 </div>
 
                 <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                   <span className="text-neutral-400 text-[11px] flex items-center gap-1.5">
-                    <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                    Asignación automática a la asesora de {selectedBranchForDemo} en Kommo CRM
+                    <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>Asignación automática a la asesora de {selectedBranchForDemo} en Kommo CRM</span>
                   </span>
-                  <button className="px-4 py-2 rounded-xl bg-amber-500 text-neutral-950 font-semibold text-xs hover:bg-amber-400 transition-colors cursor-pointer">
+                  <button className="w-full sm:w-auto px-4 py-2.5 min-h-[42px] rounded-xl bg-amber-500 text-neutral-950 font-semibold text-xs hover:bg-amber-400 transition-colors cursor-pointer">
                     Agendar mi Cita Exclusiva →
                   </button>
                 </div>
