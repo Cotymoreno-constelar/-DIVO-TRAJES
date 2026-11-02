@@ -8,7 +8,7 @@
    - Authenticated users MUST have `request.auth.token.email_verified == true` and `actorId == request.auth.uid` — unverified accounts (`email_verified == false`) cannot spoof either `pub-...` IDs or verified UIDs, and verified users cannot spoof another user's UID.
    - Bootstrapped admin (`jimenacmoreno@gmail.com`) strictly requires `email_verified == true`.
 4. **Master Gate & Atomic Relational Sync**: Every subcollection operation under `/workspaces/{workspaceId}` verifies `exists(/workspaces/$(workspaceId))`. Creating a task requires `taskId in getAfter(/workspaces/$(workspaceId)).data.taskIds`; deleting a task requires `!(taskId in getAfter(/workspaces/$(workspaceId)).data.taskIds)`.
-5. **Terminal State Locking**: Once an `OwlTask` reaches `status == 'finalizado'`, subsequent updates or deletions are blocked unless `isAdmin()` overrides.
+5. **Terminal Deletion Guard & Live Reopenability**: All `OwlTask` rows (including `status == 'finalizado'`) can be updated or reopened live by authorized collaborators (`isAuthorizedActor`), while permanent deletion (`allow delete`) of a validated `status == 'finalizado'` task is strictly blocked unless `isAdmin()` overrides.
 6. **Strict Validation Blueprints & Zero PII**: Every `create` and `update` wraps logic with `isValid[Entity](incoming())`, enforcing `hasAll`/`hasOnly` keys, string `.size()` bounds, regex patterns, immutable creation fields, `request.time` server timestamps, and zero PII storage.
 
 ## 2. The "Dirty Dozen" Adversarial Payloads (Must Return `PERMISSION_DENIED`)
@@ -18,7 +18,7 @@
 3. **Payload 3 — Unauthenticated Firebase UID Spoof**: Unauthenticated public visitor (`request.auth == null`) attempting to create a task with `createdByUid: "coty_uid"` instead of a valid `pub-...` actor ID.
 4. **Payload 4 — Cross-UID Identity Spoofing**: Verified user `victor_uid` creating `/workspaces/divo-owl/tasks/task-1` with `createdByUid: "coty_uid"`.
 5. **Payload 5 — Shadow Field Injection ("Ghost Field")**: Public collaborator updating `/workspaces/divo-owl/tasks/v-req-08` with an extra undeclared property `isVerified: true`.
-6. **Payload 6 — Terminal State Mutation Bypass**: Non-admin actor attempting to update or reopen a task where `existing().status == "finalizado"`.
+6. **Payload 6 — Terminal Finalized Task Deletion Bypass**: Non-admin actor attempting to permanently `delete` a validated task where `existing().status == "finalizado"`.
 7. **Payload 7 — Orphaned Task Write (Sync Vulnerability)**: Actor creating `/workspaces/divo-owl/tasks/task-orphan` without atomically adding `"task-orphan"` into `/workspaces/divo-owl.taskIds` (`getAfter` invariant).
 8. **Payload 8 — ID Poisoning / Resource Exhaustion**: Actor attempting `create` on `/workspaces/divo-owl/tasks/<200-char-invalid-id!@#>`.
 9. **Payload 9 — Value Poisoning on Whitelisted Update Key**: Actor updating `deadline` (an allowed key in `affectedKeys()`) with `"not-a-date"` or oversized string.

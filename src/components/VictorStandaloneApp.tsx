@@ -78,7 +78,7 @@ export const VictorStandaloneApp: React.FC<VictorStandaloneAppProps> = ({
       {/* Admin / Coty Bar (ONLY visible when Coty enters from Hub, completely absent on ?app=victor) */}
       {!hideAdminControls && (
         <div className="bg-cyan-950/50 border-b border-cyan-500/20 px-3 sm:px-4 py-2 text-xs text-cyan-200 no-print">
-          <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2 sm:gap-3">
+          <div className="max-w-[1680px] mx-auto flex flex-wrap items-center justify-between gap-2 sm:gap-3">
             <div className="flex items-center gap-2 min-w-0">
               <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shrink-0" />
               <span className="font-semibold text-cyan-300 truncate">App Independiente de Víctor</span>
@@ -143,7 +143,7 @@ export const VictorStandaloneApp: React.FC<VictorStandaloneAppProps> = ({
 
       {/* Dedicated Standalone Header for OWL SYSTEM App (Compact single row on mobile <=15% height) */}
       <header className="sticky top-0 z-40 bg-neutral-950/95 backdrop-blur-md border-b border-cyan-500/20 px-3 sm:px-6 lg:px-8 py-2 lg:py-3.5 no-print">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+        <div className="max-w-[1680px] mx-auto flex items-center justify-between gap-3">
           
           {/* OWL System Branding */}
           <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
@@ -231,7 +231,7 @@ export const VictorStandaloneApp: React.FC<VictorStandaloneAppProps> = ({
 
       {/* Non-sticky Quick Section Strip on Mobile/Tablet (< lg) */}
       <div className="lg:hidden bg-neutral-950 border-b border-neutral-900 px-3 sm:px-6 py-2 no-print">
-        <div className="max-w-7xl mx-auto flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+        <div className="max-w-[1680px] mx-auto flex items-center gap-1.5 overflow-x-auto scrollbar-none">
           {VICTOR_SECTIONS.map((sec) => {
             const Icon = sec.icon;
             const isActive = activeSection === sec.id;
@@ -254,7 +254,7 @@ export const VictorStandaloneApp: React.FC<VictorStandaloneAppProps> = ({
       </div>
 
       {/* Main Content */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
+      <main className="flex-1 max-w-[1680px] w-full mx-auto px-3 sm:px-5 lg:px-6 py-3 sm:py-5">
         <VictorOwlBoard
           activeSection={activeSection}
           onNavigateSection={setActiveSection}
@@ -263,7 +263,7 @@ export const VictorStandaloneApp: React.FC<VictorStandaloneAppProps> = ({
 
       {/* Dedicated Standalone Footer */}
       <footer className="no-print mt-auto border-t border-neutral-900 bg-neutral-950/80 px-4 py-6 text-xs text-neutral-400">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+        <div className="max-w-[1680px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
           <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 sm:gap-3">
             <span className="font-mono tracking-widest text-cyan-300 font-bold">
               OWL SYSTEM

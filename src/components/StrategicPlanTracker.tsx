@@ -471,8 +471,8 @@ export const StrategicPlanTracker: React.FC<StrategicPlanTrackerProps> = ({
             </div>
           </div>
 
-          {/* Mobile Stacked Cards (< md) */}
-          <div className="md:hidden space-y-3">
+          {/* Mobile & Tablet Stacked Cards (< lg) */}
+          <div className="lg:hidden space-y-3">
             {filteredFields.map((item) => {
               const task = tasksById.get(item.taskId);
               const isLocked = task?.status === 'finalizado' && !canModifyFinalizedTask;
@@ -617,71 +617,66 @@ export const StrategicPlanTracker: React.FC<StrategicPlanTrackerProps> = ({
             })}
           </div>
 
-          {/* Desktop Table (md+) */}
-          <div className="hidden md:block rounded-2xl border border-neutral-800 bg-neutral-900/60 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="border-b border-neutral-800 bg-neutral-950/80 text-neutral-400 text-[11px] font-semibold">
-                    <th className="py-3.5 px-4 w-12">N°</th>
-                    <th className="py-3.5 px-4 min-w-[200px]">Campo y Sistema</th>
-                    <th className="py-3.5 px-4 min-w-[260px]">Detalle / Lista cerrada</th>
-                    <th className="py-3.5 px-3 whitespace-nowrap">Reportes que lo usan</th>
-                    <th className="py-3.5 px-3 whitespace-nowrap">Fecha Límite</th>
-                    <th className="py-3.5 px-3 whitespace-nowrap">Estado Víctor</th>
-                    <th className="py-3.5 px-4 min-w-[220px]">Observaciones (Click p/ editar)</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-neutral-800/60">
-                  {filteredFields.map((item) => {
-                    const task = tasksById.get(item.taskId);
-                    const isLocked = task?.status === 'finalizado' && !canModifyFinalizedTask;
-                    return (
-                      <tr key={item.taskId} className="hover:bg-neutral-800/25 transition-colors group">
-                        <td className="py-3.5 px-4 font-mono font-bold text-neutral-300 tabular-nums">
-                          {item.number}
-                        </td>
-                        <td className="py-3.5 px-4">
-                          <div className="font-serif font-bold text-sm text-neutral-100">
-                            {item.field}
-                          </div>
-                          <div className="text-[11px] text-neutral-400 mt-0.5 flex items-center gap-1.5 flex-wrap">
-                            <span>{item.system}</span>
-                            {item.isBaseline3103 && (
-                              <>
-                                <span aria-hidden="true">·</span>
-                                <span className="text-red-300 font-medium">Crítico Línea Base 31/03</span>
-                              </>
-                            )}
-                          </div>
-                        </td>
-                        <td className="py-3.5 px-4 text-neutral-300 leading-relaxed">
-                          {item.detail}
-                        </td>
-                        <td className="py-3.5 px-3 font-mono text-neutral-300 tabular-nums whitespace-nowrap">
-                          Rep. {item.usedInReports.join(', ')}
-                        </td>
-                        <td className="py-3.5 px-3 whitespace-nowrap">
-                          {task && (
-                            <div className="inline-flex items-center bg-neutral-950 border border-neutral-800 hover:border-neutral-600 rounded-lg px-2 py-1">
+          {/* Desktop Full-Viewport Table (lg+) — w-full table-fixed, zero horizontal scroll */}
+          <div className="hidden lg:block rounded-2xl border border-neutral-800 bg-neutral-900/60 overflow-hidden">
+            <table className="w-full table-fixed text-left text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-neutral-800 bg-neutral-950/80 text-neutral-400 text-[11px] font-semibold">
+                  <th className="py-3 px-3 w-[5%]">N°</th>
+                  <th className="py-3 px-3 w-[22%]">Campo, Sistema & Reportes</th>
+                  <th className="py-3 px-3 w-[31%]">Detalle / Lista cerrada</th>
+                  <th className="py-3 px-3 w-[17%]">Fecha Límite & Estado</th>
+                  <th className="py-3 px-3.5 w-[25%]">Observaciones (Click p/ modificar)</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-800/60">
+                {filteredFields.map((item) => {
+                  const task = tasksById.get(item.taskId);
+                  const isLocked = task?.status === 'finalizado' && !canModifyFinalizedTask;
+                  return (
+                    <tr key={item.taskId} className="hover:bg-neutral-800/25 transition-colors align-top group">
+                      <td className="py-3.5 px-3 font-mono font-bold text-neutral-300 tabular-nums">
+                        {item.number}
+                      </td>
+                      <td className="py-3.5 px-3 break-words">
+                        <div className="font-serif font-bold text-sm text-neutral-100">
+                          {item.field}
+                        </div>
+                        <div className="text-[11px] text-neutral-400 mt-1 flex items-center gap-1.5 flex-wrap">
+                          <span className="font-mono text-neutral-300">{item.system}</span>
+                          <span aria-hidden="true">·</span>
+                          <span className="font-mono tabular-nums">
+                            Rep. {item.usedInReports.join(', ')}
+                          </span>
+                          {item.isBaseline3103 && (
+                            <>
+                              <span aria-hidden="true">·</span>
+                              <span className="text-red-300 font-medium">Crítico 31/03</span>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-3 text-neutral-300 leading-relaxed break-words">
+                        {item.detail}
+                      </td>
+                      <td className="py-3.5 px-3">
+                        {task && (
+                          <div className="space-y-1.5">
+                            <div className="flex items-center bg-neutral-950 border border-neutral-800 hover:border-neutral-600 rounded-lg px-2 py-1">
                               <Calendar className={`w-3.5 h-3.5 mr-1.5 shrink-0 ${accentText}`} />
                               <input
                                 type="date"
                                 value={task.deadline}
                                 disabled={isLocked}
                                 onChange={(e) => handleDeadlineChange(task.id, e.target.value)}
-                                className="bg-transparent text-neutral-200 font-mono text-xs focus:outline-none cursor-pointer w-28 tabular-nums disabled:opacity-60"
+                                className="bg-transparent text-neutral-200 font-mono text-xs focus:outline-none cursor-pointer w-full min-w-0 tabular-nums disabled:opacity-60"
                               />
                             </div>
-                          )}
-                        </td>
-                        <td className="py-3.5 px-3 whitespace-nowrap">
-                          {task && (
                             <select
                               value={task.status}
                               disabled={isLocked}
                               onChange={(e) => handleStatusChange(task.id, e.target.value as TaskStatus)}
-                              className={`border rounded-lg px-2.5 py-1 text-xs focus:outline-none cursor-pointer disabled:opacity-60 ${
+                              className={`w-full border rounded-lg px-2 py-1 text-xs focus:outline-none cursor-pointer disabled:opacity-60 ${
                                 task.status === 'finalizado'
                                   ? 'bg-emerald-950/40 text-emerald-300 border-emerald-500/40 font-semibold'
                                   : task.status === 'en_curso'
@@ -696,56 +691,59 @@ export const StrategicPlanTracker: React.FC<StrategicPlanTrackerProps> = ({
                               <option value="bloqueada">Bloqueada</option>
                               <option value="finalizado">Finalizado (LISTO)</option>
                             </select>
-                          )}
-                        </td>
-                        <td className="py-3.5 px-4 text-neutral-300">
-                          {task && editingObsId === task.id ? (
-                            <div className="flex items-center gap-1.5">
-                              <input
-                                type="text"
-                                maxLength={MAX_OBSERVATIONS_LENGTH}
-                                value={tempObs}
-                                onChange={(e) => setTempObs(e.target.value)}
-                                className="w-full bg-neutral-950 border border-neutral-600 rounded px-2 py-1 text-xs text-neutral-100 focus:outline-none"
-                                autoFocus
-                              />
-                              <button
-                                onClick={() => handleSaveObs(task.id)}
-                                className="p-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 cursor-pointer"
-                                title="Guardar"
-                              >
-                                <Check className="w-3.5 h-3.5" />
-                              </button>
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-3.5 px-3.5 text-neutral-300 break-words">
+                        {task && editingObsId === task.id ? (
+                          <div className="space-y-1.5">
+                            <textarea
+                              rows={3}
+                              maxLength={MAX_OBSERVATIONS_LENGTH}
+                              value={tempObs}
+                              onChange={(e) => setTempObs(e.target.value)}
+                              className="w-full bg-neutral-950 border border-neutral-600 rounded-lg px-2.5 py-1.5 text-xs text-neutral-100 focus:outline-none"
+                              autoFocus
+                            />
+                            <div className="flex items-center justify-end gap-1.5">
                               <button
                                 onClick={() => setEditingObsId(null)}
-                                className="p-1 rounded bg-neutral-800 text-neutral-400 cursor-pointer"
-                                title="Cancelar"
+                                className="px-2.5 py-1 rounded bg-neutral-800 text-neutral-300 text-[11px] cursor-pointer"
                               >
-                                <X className="w-3.5 h-3.5" />
+                                Cancelar
+                              </button>
+                              <button
+                                onClick={() => handleSaveObs(task.id)}
+                                className="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-200 border border-emerald-500/40 text-[11px] font-semibold flex items-center gap-1 cursor-pointer"
+                              >
+                                <Check className="w-3 h-3" />
+                                <span>Guardar</span>
                               </button>
                             </div>
-                          ) : (
-                            task && (
-                              <div
-                                onClick={() => {
-                                  if (isLocked) return;
-                                  setEditingObsId(task.id);
-                                  setTempObs(task.observations);
-                                }}
-                                className="cursor-pointer hover:bg-neutral-950/70 p-1.5 rounded-lg flex items-start justify-between gap-2"
-                              >
-                                <span className="leading-relaxed line-clamp-2">{task.observations}</span>
-                                <Edit3 className="w-3.5 h-3.5 text-neutral-500 opacity-60 group-hover:opacity-100 shrink-0 mt-0.5" />
-                              </div>
-                            )
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                          </div>
+                        ) : (
+                          task && (
+                            <div
+                              onClick={() => {
+                                if (isLocked) return;
+                                setEditingObsId(task.id);
+                                setTempObs(task.observations);
+                              }}
+                              className="cursor-pointer hover:bg-neutral-950/70 p-2 rounded-lg border border-transparent hover:border-neutral-700 flex items-start justify-between gap-2"
+                            >
+                              <span className="leading-relaxed whitespace-normal break-words">
+                                {task.observations}
+                              </span>
+                              <Edit3 className="w-3.5 h-3.5 text-neutral-400 group-hover:text-neutral-200 shrink-0 mt-0.5" />
+                            </div>
+                          )
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </section>
       )}
@@ -810,8 +808,8 @@ export const StrategicPlanTracker: React.FC<StrategicPlanTrackerProps> = ({
             </div>
           </div>
 
-          {/* Mobile Stacked Report Cards (< md) */}
-          <div className="md:hidden space-y-3">
+          {/* Mobile & Tablet Stacked Report Cards (< lg) */}
+          <div className="lg:hidden space-y-3">
             {filteredReports.length === 0 ? (
               <div className="p-8 text-center rounded-2xl bg-neutral-900/60 border border-neutral-800 text-xs text-neutral-500">
                 No hay reportes que coincidan con el filtro seleccionado.
@@ -980,99 +978,93 @@ export const StrategicPlanTracker: React.FC<StrategicPlanTrackerProps> = ({
             )}
           </div>
 
-          {/* Desktop Table (md+) */}
-          <div className="hidden md:block rounded-2xl border border-neutral-800 bg-neutral-900/60 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="border-b border-neutral-800 bg-neutral-950/80 text-neutral-400 text-[11px] font-semibold">
-                    <th className="py-3.5 px-3 w-12">N°</th>
-                    <th className="py-3.5 px-4 min-w-[200px]">Reporte / Bloque</th>
-                    <th className="py-3.5 px-4 min-w-[280px]">Qué muestra / Cómo se calcula</th>
-                    <th className="py-3.5 px-3 min-w-[160px]">Filtros y Frecuencia</th>
-                    <th className="py-3.5 px-3 whitespace-nowrap">Sistema · Prioridad</th>
-                    <th className="py-3.5 px-3 whitespace-nowrap">Fecha Límite</th>
-                    <th className="py-3.5 px-3 whitespace-nowrap">Estado Víctor</th>
-                    <th className="py-3.5 px-4 min-w-[200px]">Observaciones</th>
+          {/* Desktop Full-Viewport Table (lg+) — w-full table-fixed, zero horizontal scroll */}
+          <div className="hidden lg:block rounded-2xl border border-neutral-800 bg-neutral-900/60 overflow-hidden">
+            <table className="w-full table-fixed text-left text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-neutral-800 bg-neutral-950/80 text-neutral-400 text-[11px] font-semibold">
+                  <th className="py-3 px-2.5 w-[4%]">N°</th>
+                  <th className="py-3 px-3 w-[21%]">Reporte · Bloque & Sistema</th>
+                  <th className="py-3 px-3 w-[25%]">Qué muestra / Cómo se calcula</th>
+                  <th className="py-3 px-3 w-[13%]">Filtros & Frecuencia</th>
+                  <th className="py-3 px-2.5 w-[16%]">Fecha Límite & Estado</th>
+                  <th className="py-3 px-3 w-[21%]">Observaciones (Click p/ modificar)</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-800/60">
+                {filteredReports.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-10 text-center text-neutral-500">
+                      No hay reportes que coincidan con el filtro seleccionado.
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-neutral-800/60">
-                  {filteredReports.length === 0 ? (
-                    <tr>
-                      <td colSpan={8} className="py-10 text-center text-neutral-500">
-                        No hay reportes que coincidan con el filtro seleccionado.
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredReports.map((rep) => {
-                      const task = tasksById.get(rep.taskId);
-                      const isLocked = task?.status === 'finalizado' && !canModifyFinalizedTask;
-                      return (
-                        <tr key={rep.taskId} className="hover:bg-neutral-800/25 transition-colors group">
-                          <td className="py-3.5 px-3 font-mono font-bold text-neutral-300 tabular-nums">
-                            {rep.number}
-                          </td>
-                          <td className="py-3.5 px-4">
-                            <div className="font-serif font-bold text-sm text-neutral-100">
-                              {rep.name}
-                            </div>
-                            <div className="text-[11px] text-neutral-400 mt-0.5 flex items-center gap-1.5 flex-wrap">
-                              <span>{rep.block}</span>
-                              {rep.kpiHighlight && (
-                                <>
-                                  <span aria-hidden="true">·</span>
-                                  <span className={accentText}>{rep.kpiHighlight}</span>
-                                </>
-                              )}
-                            </div>
-                          </td>
-                          <td className="py-3.5 px-4 text-neutral-300 leading-relaxed">
-                            {rep.whatItShowsAndCalculation}
-                          </td>
-                          <td className="py-3.5 px-3 text-neutral-300">
-                            <div><span className="text-neutral-500">Filtros:</span> {rep.filters}</div>
-                            <div className="text-[11px] text-neutral-400 mt-0.5">
-                              <span className="text-neutral-500">Frec.:</span> {rep.frequency}
-                            </div>
-                          </td>
-                          <td className="py-3.5 px-3 whitespace-nowrap">
-                            <div className="font-mono text-neutral-200">{rep.system}</div>
-                            <div className="text-[11px] mt-0.5">
-                              <span
-                                className={
-                                  rep.priorityLabel === 'Alta'
-                                    ? 'text-amber-300 font-semibold'
-                                    : rep.priorityLabel === 'Media'
-                                    ? 'text-cyan-300'
-                                    : 'text-neutral-400'
-                                }
-                              >
-                                Prioridad {rep.priorityLabel}
-                              </span>
-                              <span className="text-neutral-500"> · Etapa {rep.developmentStage}</span>
-                            </div>
-                          </td>
-                          <td className="py-3.5 px-3 whitespace-nowrap">
-                            {task && (
-                              <div className="inline-flex items-center bg-neutral-950 border border-neutral-800 hover:border-neutral-600 rounded-lg px-2 py-1">
+                ) : (
+                  filteredReports.map((rep) => {
+                    const task = tasksById.get(rep.taskId);
+                    const isLocked = task?.status === 'finalizado' && !canModifyFinalizedTask;
+                    return (
+                      <tr key={rep.taskId} className="hover:bg-neutral-800/25 transition-colors align-top group">
+                        <td className="py-3.5 px-2.5 font-mono font-bold text-neutral-300 tabular-nums">
+                          {rep.number}
+                        </td>
+                        <td className="py-3.5 px-3 break-words">
+                          <div className="font-serif font-bold text-sm text-neutral-100 leading-snug">
+                            {rep.name}
+                          </div>
+                          <div className="text-[11px] text-neutral-400 mt-1 flex items-center gap-1.5 flex-wrap">
+                            <span className="font-mono text-neutral-200">{rep.system}</span>
+                            <span aria-hidden="true">·</span>
+                            <span
+                              className={
+                                rep.priorityLabel === 'Alta'
+                                  ? 'text-amber-300 font-semibold'
+                                  : rep.priorityLabel === 'Media'
+                                  ? 'text-cyan-300'
+                                  : 'text-neutral-400'
+                              }
+                            >
+                              Prio. {rep.priorityLabel} (Etapa {rep.developmentStage})
+                            </span>
+                          </div>
+                          <div className="text-[11px] text-neutral-500 mt-0.5 break-words">
+                            {rep.block}
+                            {rep.kpiHighlight && (
+                              <>
+                                {' · '}
+                                <span className={accentText}>{rep.kpiHighlight}</span>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-3 text-neutral-300 leading-relaxed break-words">
+                          {rep.whatItShowsAndCalculation}
+                        </td>
+                        <td className="py-3.5 px-3 text-neutral-300 break-words space-y-1">
+                          <div>
+                            <span className="text-neutral-500">Filtros:</span> {rep.filters}
+                          </div>
+                          <div className="text-[11px] text-neutral-400">
+                            <span className="text-neutral-500">Frec.:</span> {rep.frequency}
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-2.5">
+                          {task && (
+                            <div className="space-y-1.5">
+                              <div className="flex items-center bg-neutral-950 border border-neutral-800 hover:border-neutral-600 rounded-lg px-2 py-1">
                                 <Calendar className={`w-3.5 h-3.5 mr-1.5 shrink-0 ${accentText}`} />
                                 <input
                                   type="date"
                                   value={task.deadline}
                                   disabled={isLocked}
                                   onChange={(e) => handleDeadlineChange(task.id, e.target.value)}
-                                  className="bg-transparent text-neutral-200 font-mono text-xs focus:outline-none cursor-pointer w-28 tabular-nums disabled:opacity-60"
+                                  className="bg-transparent text-neutral-200 font-mono text-xs focus:outline-none cursor-pointer w-full min-w-0 tabular-nums disabled:opacity-60"
                                 />
                               </div>
-                            )}
-                          </td>
-                          <td className="py-3.5 px-3 whitespace-nowrap">
-                            {task && (
                               <select
                                 value={task.status}
                                 disabled={isLocked}
                                 onChange={(e) => handleStatusChange(task.id, e.target.value as TaskStatus)}
-                                className={`border rounded-lg px-2.5 py-1 text-xs focus:outline-none cursor-pointer disabled:opacity-60 ${
+                                className={`w-full border rounded-lg px-2 py-1 text-xs focus:outline-none cursor-pointer disabled:opacity-60 ${
                                   task.status === 'finalizado'
                                     ? 'bg-emerald-950/40 text-emerald-300 border-emerald-500/40 font-semibold'
                                     : task.status === 'en_curso'
@@ -1087,55 +1079,60 @@ export const StrategicPlanTracker: React.FC<StrategicPlanTrackerProps> = ({
                                 <option value="bloqueada">Bloqueada</option>
                                 <option value="finalizado">Finalizado (LISTO)</option>
                               </select>
-                            )}
-                          </td>
-                          <td className="py-3.5 px-4 text-neutral-300">
-                            {task && editingObsId === task.id ? (
-                              <div className="flex items-center gap-1.5">
-                                <input
-                                  type="text"
-                                  maxLength={MAX_OBSERVATIONS_LENGTH}
-                                  value={tempObs}
-                                  onChange={(e) => setTempObs(e.target.value)}
-                                  className="w-full bg-neutral-950 border border-neutral-600 rounded px-2 py-1 text-xs text-neutral-100 focus:outline-none"
-                                  autoFocus
-                                />
-                                <button
-                                  onClick={() => handleSaveObs(task.id)}
-                                  className="p-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 cursor-pointer"
-                                >
-                                  <Check className="w-3.5 h-3.5" />
-                                </button>
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-3 text-neutral-300 break-words">
+                          {task && editingObsId === task.id ? (
+                            <div className="space-y-1.5">
+                              <textarea
+                                rows={3}
+                                maxLength={MAX_OBSERVATIONS_LENGTH}
+                                value={tempObs}
+                                onChange={(e) => setTempObs(e.target.value)}
+                                className="w-full bg-neutral-950 border border-neutral-600 rounded-lg px-2.5 py-1.5 text-xs text-neutral-100 focus:outline-none"
+                                autoFocus
+                              />
+                              <div className="flex items-center justify-end gap-1.5">
                                 <button
                                   onClick={() => setEditingObsId(null)}
-                                  className="p-1 rounded bg-neutral-800 text-neutral-400 cursor-pointer"
+                                  className="px-2.5 py-1 rounded bg-neutral-800 text-neutral-300 text-[11px] cursor-pointer"
                                 >
-                                  <X className="w-3.5 h-3.5" />
+                                  Cancelar
+                                </button>
+                                <button
+                                  onClick={() => handleSaveObs(task.id)}
+                                  className="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-200 border border-emerald-500/40 text-[11px] font-semibold flex items-center gap-1 cursor-pointer"
+                                >
+                                  <Check className="w-3 h-3" />
+                                  <span>Guardar</span>
                                 </button>
                               </div>
-                            ) : (
-                              task && (
-                                <div
-                                  onClick={() => {
-                                    if (isLocked) return;
-                                    setEditingObsId(task.id);
-                                    setTempObs(task.observations);
-                                  }}
-                                  className="cursor-pointer hover:bg-neutral-950/70 p-1.5 rounded-lg flex items-start justify-between gap-2"
-                                >
-                                  <span className="leading-relaxed line-clamp-2">{task.observations}</span>
-                                  <Edit3 className="w-3.5 h-3.5 text-neutral-500 opacity-60 group-hover:opacity-100 shrink-0 mt-0.5" />
-                                </div>
-                              )
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
+                            </div>
+                          ) : (
+                            task && (
+                              <div
+                                onClick={() => {
+                                  if (isLocked) return;
+                                  setEditingObsId(task.id);
+                                  setTempObs(task.observations);
+                                }}
+                                className="cursor-pointer hover:bg-neutral-950/70 p-2 rounded-lg border border-transparent hover:border-neutral-700 flex items-start justify-between gap-2"
+                              >
+                                <span className="leading-relaxed whitespace-normal break-words">
+                                  {task.observations}
+                                </span>
+                                <Edit3 className="w-3.5 h-3.5 text-neutral-400 group-hover:text-neutral-200 shrink-0 mt-0.5" />
+                              </div>
+                            )
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
           </div>
         </section>
       )}

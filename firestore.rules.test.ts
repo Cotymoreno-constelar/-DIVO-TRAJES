@@ -146,9 +146,6 @@ function evaluateTaskUpdate(
   ) {
     return false;
   }
-  if (existing.status === 'finalizado' && !isAdmin(auth, db)) {
-    return false;
-  }
   if (isAdmin(auth, db)) return true;
 
   const affectedKeys = Object.keys(incoming).filter((k) => incoming[k] !== existing[k]);
@@ -161,6 +158,23 @@ function evaluateTaskUpdate(
     affectedKeys.every((k) => allowedProgress.includes(k)) ||
     affectedKeys.every((k) => allowedFull.includes(k))
   );
+}
+
+function evaluateTaskDelete(
+  workspaceId: string,
+  taskId: string,
+  auth: AuthContext | null,
+  db: DbState,
+  postDb: DbState
+): boolean {
+  if (!isPublicDivoWorkspace(workspaceId) || !isValidId(taskId)) return false;
+  if (!db.workspaces[workspaceId]) return false;
+  const existing = db.tasks[`${workspaceId}/${taskId}`];
+  if (!existing) return false;
+  if (existing.status === 'finalizado' && !isAdmin(auth, db)) return false;
+  const postWs = postDb.workspaces[workspaceId];
+  const postTaskIds = (postWs?.taskIds as string[]) || [];
+  return !postTaskIds.includes(taskId);
 }
 
 function evaluateDecisionWrite(
@@ -319,16 +333,22 @@ function runSuite(): void {
     '5. Shadow Field Injection'
   );
 
-  // 6. Terminal State Mutation Bypass
+  // 6. Terminal Finalized Task Deletion Bypass
+  const postWithoutFinalized: DbState = {
+    ...baseDb,
+    workspaces: {
+      'divo-owl': { ...baseDb.workspaces['divo-owl'], taskIds: ['v-req-08'] }
+    }
+  };
   assertDenied(
-    evaluateTaskUpdate(
+    evaluateTaskDelete(
       'divo-owl',
       'v-req-01',
-      { ...finalizedTask, status: 'en_curso', updatedByUid: publicVisitorActorId, updatedAt: REQUEST_TIME },
       null,
-      baseDb
+      baseDb,
+      postWithoutFinalized
     ),
-    '6. Terminal State Mutation Bypass'
+    '6. Terminal Finalized Task Deletion Bypass'
   );
 
   // 7. Orphaned Task Write (Sync Vulnerability)
@@ -444,11 +464,22 @@ function runSuite(): void {
     evaluateTaskUpdate(
       'divo-owl',
       'v-req-01',
-      { ...finalizedTask, status: 'en_curso', updatedByUid: 'coty_uid', updatedAt: REQUEST_TIME },
-      cotyAuth,
+      { ...finalizedTask, status: 'en_curso', updatedByUid: publicVisitorActorId, updatedAt: REQUEST_TIME },
+      null,
       baseDb
     ),
-    'Positive Control: Admin overrides finalized task state'
+    'Positive Control: Public Live collaborator modifies/reopens finalized task on main board'
+  );
+
+  assertAllowed(
+    evaluateTaskDelete(
+      'divo-owl',
+      'v-req-01',
+      cotyAuth,
+      baseDb,
+      postWithoutFinalized
+    ),
+    'Positive Control: Admin can delete finalized task when needed'
   );
 
   console.log(`ALL 12 DIRTY DOZEN PAYLOADS DENIED & POSITIVE CONTROLS PASSED (${targetFile}).`);

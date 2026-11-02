@@ -363,14 +363,13 @@ service cloud.firestore {
           incoming().createdAt == existing().createdAt &&
           incoming().updatedAt == request.time &&
           exists(workspaceDocPath(workspaceId)) &&
-          (existing().status != 'finalizado' || isAdmin()) &&
           (
             isAdmin() ||
             // Action 1: Operational progress update (status, deadline, observations, specs)
             incoming().diff(existing()).affectedKeys().hasOnly([
               'status', 'deadline', 'observations', 'specs', 'updatedByUid', 'updatedAt'
             ]) ||
-            // Action 2: Full non-terminal task fields update
+            // Action 2: Full task fields update on the live board
             incoming().diff(existing()).affectedKeys().hasOnly([
               'title', 'requestedBy', 'module', 'priority', 'deadline',
               'status', 'observations', 'specs', 'updatedByUid', 'updatedAt'

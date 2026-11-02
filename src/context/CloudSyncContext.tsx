@@ -58,6 +58,7 @@ interface CloudSyncContextValue {
   hasPendingLocalEdits: boolean;
   activeTeamCode: string;
   canDeleteTasks: boolean;
+  canDeleteFinalizedTask: boolean;
   canEditAllFieldsOfTask: (task: VictorTask) => boolean;
   canModifyFinalizedTask: boolean;
   signInToCloud: () => Promise<void>;
@@ -67,7 +68,19 @@ interface CloudSyncContextValue {
   createTask: (task: VictorTask) => Promise<void>;
   updateTaskProgress: (
     taskId: string,
-    updates: Partial<Pick<VictorTask, 'status' | 'deadline' | 'observations' | 'specs'>>
+    updates: Partial<
+      Pick<
+        VictorTask,
+        | 'status'
+        | 'deadline'
+        | 'observations'
+        | 'specs'
+        | 'requestedBy'
+        | 'priority'
+        | 'title'
+        | 'module'
+      >
+    >
   ) => Promise<void>;
   updateFullTask: (task: VictorTask) => Promise<void>;
   deleteTask: (taskId: string) => Promise<void>;
@@ -289,11 +302,10 @@ export const CloudSyncProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const stillUnsynced = candidates.some((localTask) => {
       const cloudTask = cloudTasksMapRef.current.get(localTask.id);
       if (!cloudTask) return true;
-      if (cloudTask.status === 'finalizado' && !isAdminUser) return false;
       return !tasksContentEqual(localTask, cloudTask);
     });
     setHasPendingLocalEdits(stillUnsynced);
-  }, [isAdminUser]);
+  }, []);
 
   // Seed tasks into workspace in chunks of 4 per batch
   const seedTasksIntoCloudWorkspace = useCallback(
@@ -660,15 +672,12 @@ export const CloudSyncProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const canDeleteTasks = true;
-  const canModifyFinalizedTask = isAdminUser;
+  const canDeleteFinalizedTask = isAdminUser;
+  const canModifyFinalizedTask = true;
 
-  const canEditAllFieldsOfTask = useCallback(
-    (task: VictorTask): boolean => {
-      if (task.status === 'finalizado') return isAdminUser;
-      return true;
-    },
-    [isAdminUser]
-  );
+  const canEditAllFieldsOfTask = useCallback((): boolean => {
+    return true;
+  }, []);
 
   // Sync bulk task list (from pre-connect local edits or imported .json) into live Firestore
   const syncTaskArrayToCloud = async (sourceTasks: VictorTask[]): Promise<number> => {
@@ -726,11 +735,10 @@ export const CloudSyncProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
     }
 
-    // 2. Update existing non-finalized tasks (or finalized if admin) whose fields changed
+    // 2. Update existing tasks whose fields changed
     const toUpdate = sanitizedList.filter((t) => {
       const existing = cloudTasksMapRef.current.get(t.id);
       if (!existing) return false;
-      if (existing.status === 'finalizado' && !isAdminUser) return false;
       return !tasksContentEqual(existing, t);
     });
 
@@ -823,7 +831,19 @@ export const CloudSyncProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const updateTaskProgress = async (
     taskId: string,
-    updates: Partial<Pick<VictorTask, 'status' | 'deadline' | 'observations' | 'specs'>>
+    updates: Partial<
+      Pick<
+        VictorTask,
+        | 'status'
+        | 'deadline'
+        | 'observations'
+        | 'specs'
+        | 'requestedBy'
+        | 'priority'
+        | 'title'
+        | 'module'
+      >
+    >
   ): Promise<void> => {
     const existing = tasks.find((t) => t.id === taskId);
     if (!existing) return;
@@ -832,10 +852,6 @@ export const CloudSyncProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     if (!isWorkspaceReady) {
       setTasks((prev) => prev.map((t) => (t.id === taskId ? merged : t)));
-      return;
-    }
-
-    if (existing.status === 'finalizado' && !isAdminUser) {
       return;
     }
 
@@ -854,6 +870,10 @@ export const CloudSyncProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     if (updates.deadline !== undefined) payload.deadline = merged.deadline;
     if (updates.observations !== undefined) payload.observations = merged.observations;
     if (updates.specs !== undefined) payload.specs = merged.specs || '';
+    if (updates.requestedBy !== undefined) payload.requestedBy = merged.requestedBy;
+    if (updates.priority !== undefined) payload.priority = merged.priority;
+    if (updates.title !== undefined) payload.title = merged.title;
+    if (updates.module !== undefined) payload.module = merged.module;
 
     try {
       await updateDoc(taskRef, payload);
@@ -877,10 +897,6 @@ export const CloudSyncProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     if (!isWorkspaceReady) {
       setTasks((prev) => prev.map((t) => (t.id === clean.id ? clean : t)));
-      return;
-    }
-
-    if (existing.status === 'finalizado' && !isAdminUser) {
       return;
     }
 
@@ -1021,6 +1037,7 @@ export const CloudSyncProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         hasPendingLocalEdits,
         activeTeamCode,
         canDeleteTasks,
+        canDeleteFinalizedTask,
         canEditAllFieldsOfTask,
         canModifyFinalizedTask,
         signInToCloud,

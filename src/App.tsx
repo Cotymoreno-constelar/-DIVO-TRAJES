@@ -171,7 +171,11 @@ export default function App() {
         />
 
         {/* Content Area */}
-        <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
+        <main
+          className={`flex-1 w-full mx-auto px-3 sm:px-5 lg:px-6 py-4 sm:py-6 ${
+            activeTab === 'seguimiento' ? 'max-w-[1680px]' : 'max-w-7xl'
+          }`}
+        >
           {activeTab === 'flujograma' && (
             <InteractiveFlowchart
               selectedNodeId={selectedNodeId}
