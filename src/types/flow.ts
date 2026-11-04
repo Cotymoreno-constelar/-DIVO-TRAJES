@@ -78,6 +78,14 @@ export type TaskStatus = 'sin_novedades' | 'en_curso' | 'terminada' | 'probada' 
 export type TaskRequester = 'Coty' | 'Yasmín' | 'Sucursales' | 'Administración';
 export type TaskPriority = 'urgente' | 'alta' | 'media' | 'baja';
 
+export type TaskSortOption =
+  | 'deadline_asc'
+  | 'deadline_desc'
+  | 'title_asc'
+  | 'title_desc'
+  | 'updated_desc'
+  | 'updated_asc';
+
 export interface VictorTask {
   id: string;
   title: string;
@@ -88,6 +96,7 @@ export interface VictorTask {
   status: TaskStatus;
   observations: string;
   createdAt: string;
+  updatedAt?: string;
   specs?: string;
   createdByUid?: string;
 }

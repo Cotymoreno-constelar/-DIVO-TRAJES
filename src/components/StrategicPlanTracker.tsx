@@ -9,15 +9,18 @@ import {
   DIRECTION_PENDING_ITEMS,
   ReportBlockCategory,
 } from '../data/reportsPlanData';
-import { TaskStatus, VictorTask } from '../types/flow';
+import { TaskStatus, TaskSortOption, VictorTask } from '../types/flow';
 import { useCloudSync } from '../context/CloudSyncContext';
 import { CloudSyncBanner } from './CloudSyncBanner';
-import { MAX_OBSERVATIONS_LENGTH, MAX_DECISION_TEXT_LENGTH } from '../firebase';
+import {
+  MAX_OBSERVATIONS_LENGTH,
+  MAX_DECISION_TEXT_LENGTH,
+  formatTaskLastModified,
+} from '../firebase';
 import {
   Calendar,
   CheckCircle2,
   Check,
-  X,
   Edit3,
   Search,
   BarChart3,
@@ -26,6 +29,10 @@ import {
   Sliders,
   AlertTriangle,
   Send,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  Clock,
 } from 'lucide-react';
 
 interface StrategicPlanTrackerProps {
@@ -47,12 +54,15 @@ export const StrategicPlanTracker: React.FC<StrategicPlanTrackerProps> = ({
 
   const isVictorTheme = variant === 'victor';
 
-  const [activeSubTab, setActiveSubTab] = useState<'campos' | 'reportes' | 'rep27_condiciones' | 'direccion'>('reportes');
+  const [activeSubTab, setActiveSubTab] = useState<
+    'campos' | 'reportes' | 'finalizado' | 'rep27_condiciones' | 'direccion'
+  >('reportes');
   const [selectedStageFilter, setSelectedStageFilter] = useState<number | 'all'>('all');
   const [selectedBlock, setSelectedBlock] = useState<ReportBlockCategory | 'all'>('all');
   const [selectedPriority, setSelectedPriority] = useState<'all' | 'Alta' | 'Media' | 'Baja'>('all');
   const [selectedSystem, setSelectedSystem] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [planSortBy, setPlanSortBy] = useState<TaskSortOption | 'number_asc'>('deadline_asc');
 
   // Inline observation editing
   const [editingObsId, setEditingObsId] = useState<string | null>(null);
@@ -94,7 +104,13 @@ export const StrategicPlanTracker: React.FC<StrategicPlanTrackerProps> = ({
       return;
     }
     void updateTaskProgress(taskId, { status: nextStatus });
-    notify('Estado guardado en vivo para todo el equipo');
+    if (activeSubTab !== 'finalizado' && nextStatus === 'finalizado') {
+      notify('Ítem movido al bloque FINALIZADO (guardado en vivo)');
+    } else if (activeSubTab === 'finalizado' && nextStatus !== 'finalizado') {
+      notify('Ítem reabierto y devuelto a pendientes activos');
+    } else {
+      notify('Estado guardado en vivo para todo el equipo');
+    }
   };
 
   const handleDeadlineChange = (taskId: string, nextDate: string) => {
@@ -161,12 +177,21 @@ export const StrategicPlanTracker: React.FC<StrategicPlanTrackerProps> = ({
     );
   };
 
-  // Filtered Fields
+  // Active vs Finalized counts for Campos & Reportes
+  const activeFieldsTotalCount = NEW_SYSTEM_FIELDS.filter(
+    (f) => tasksById.get(f.taskId)?.status !== 'finalizado'
+  ).length;
+  const activeReportsTotalCount = SYSTEM_REPORTS_CATALOG.filter(
+    (r) => tasksById.get(r.taskId)?.status !== 'finalizado'
+  ).length;
+
+  // Filtered Active Fields (excludes Finalizado)
   const filteredFields = NEW_SYSTEM_FIELDS.filter((f) => {
+    const task = tasksById.get(f.taskId);
+    if (task?.status === 'finalizado') return false;
     if (selectedStageFilter !== 'all' && selectedStageFilter !== 1) return false;
     if (searchTerm.trim() !== '') {
       const q = searchTerm.toLowerCase();
-      const task = tasksById.get(f.taskId);
       return (
         f.field.toLowerCase().includes(q) ||
         f.detail.toLowerCase().includes(q) ||
@@ -177,15 +202,16 @@ export const StrategicPlanTracker: React.FC<StrategicPlanTrackerProps> = ({
     return true;
   });
 
-  // Filtered Reports
+  // Filtered Active Reports (excludes Finalizado)
   const filteredReports = SYSTEM_REPORTS_CATALOG.filter((r) => {
+    const task = tasksById.get(r.taskId);
+    if (task?.status === 'finalizado') return false;
     if (selectedStageFilter !== 'all' && r.developmentStage !== selectedStageFilter) return false;
     if (selectedBlock !== 'all' && r.block !== selectedBlock) return false;
     if (selectedPriority !== 'all' && r.priorityLabel !== selectedPriority) return false;
     if (selectedSystem !== 'all' && r.system !== selectedSystem) return false;
     if (searchTerm.trim() !== '') {
       const q = searchTerm.toLowerCase();
-      const task = tasksById.get(r.taskId);
       return (
         String(r.number) === q ||
         r.name.toLowerCase().includes(q) ||
@@ -196,6 +222,130 @@ export const StrategicPlanTracker: React.FC<StrategicPlanTrackerProps> = ({
       );
     }
     return true;
+  });
+
+  // Unified Finalized Plan Items (Campos + Reportes in Bloque FINALIZADO)
+  interface FinalizedPlanRow {
+    taskId: string;
+    kind: 'Campo' | 'Reporte';
+    number: number;
+    title: string;
+    system: string;
+    summary: string;
+  }
+
+  const allFinalizedPlanItems: FinalizedPlanRow[] = [
+    ...NEW_SYSTEM_FIELDS.filter((f) => tasksById.get(f.taskId)?.status === 'finalizado').map(
+      (f) => ({
+        taskId: f.taskId,
+        kind: 'Campo' as const,
+        number: f.number,
+        title: f.field,
+        system: f.system,
+        summary: f.detail,
+      })
+    ),
+    ...SYSTEM_REPORTS_CATALOG.filter((r) => tasksById.get(r.taskId)?.status === 'finalizado').map(
+      (r) => ({
+        taskId: r.taskId,
+        kind: 'Reporte' as const,
+        number: r.number,
+        title: r.name,
+        system: r.system,
+        summary: r.whatItShowsAndCalculation,
+      })
+    ),
+  ];
+
+  const filteredFinalizedPlanItems = allFinalizedPlanItems.filter((row) => {
+    if (searchTerm.trim() !== '') {
+      const q = searchTerm.toLowerCase();
+      const task = tasksById.get(row.taskId);
+      return (
+        row.title.toLowerCase().includes(q) ||
+        row.summary.toLowerCase().includes(q) ||
+        row.system.toLowerCase().includes(q) ||
+        (task?.observations.toLowerCase().includes(q) ?? false)
+      );
+    }
+    return true;
+  });
+
+  const planCollator = new Intl.Collator('es', { numeric: true, sensitivity: 'base' });
+
+  const sortedFields = [...filteredFields].sort((a, b) => {
+    if (planSortBy === 'number_asc') return a.number - b.number;
+    const tA = tasksById.get(a.taskId);
+    const tB = tasksById.get(b.taskId);
+    const deadA = tA?.deadline || '2026-12-31';
+    const deadB = tB?.deadline || '2026-12-31';
+    if (planSortBy === 'deadline_asc') {
+      const cmp = deadA.localeCompare(deadB);
+      return cmp !== 0 ? cmp : a.number - b.number;
+    }
+    if (planSortBy === 'deadline_desc') {
+      const cmp = deadB.localeCompare(deadA);
+      return cmp !== 0 ? cmp : a.number - b.number;
+    }
+    if (planSortBy === 'title_asc') {
+      return planCollator.compare(a.field, b.field);
+    }
+    if (planSortBy === 'title_desc') {
+      return planCollator.compare(b.field, a.field);
+    }
+    const msA = formatTaskLastModified(tA?.updatedAt, tA?.createdAt).sortMs;
+    const msB = formatTaskLastModified(tB?.updatedAt, tB?.createdAt).sortMs;
+    return planSortBy === 'updated_asc' ? msA - msB : msB - msA;
+  });
+
+  const sortedReports = [...filteredReports].sort((a, b) => {
+    if (planSortBy === 'number_asc') return a.number - b.number;
+    const tA = tasksById.get(a.taskId);
+    const tB = tasksById.get(b.taskId);
+    const deadA = tA?.deadline || '2026-12-31';
+    const deadB = tB?.deadline || '2026-12-31';
+    if (planSortBy === 'deadline_asc') {
+      const cmp = deadA.localeCompare(deadB);
+      return cmp !== 0 ? cmp : a.number - b.number;
+    }
+    if (planSortBy === 'deadline_desc') {
+      const cmp = deadB.localeCompare(deadA);
+      return cmp !== 0 ? cmp : a.number - b.number;
+    }
+    if (planSortBy === 'title_asc') {
+      return planCollator.compare(a.name, b.name);
+    }
+    if (planSortBy === 'title_desc') {
+      return planCollator.compare(b.name, a.name);
+    }
+    const msA = formatTaskLastModified(tA?.updatedAt, tA?.createdAt).sortMs;
+    const msB = formatTaskLastModified(tB?.updatedAt, tB?.createdAt).sortMs;
+    return planSortBy === 'updated_asc' ? msA - msB : msB - msA;
+  });
+
+  const sortedFinalizedPlanItems = [...filteredFinalizedPlanItems].sort((a, b) => {
+    if (planSortBy === 'number_asc') return a.number - b.number;
+    const tA = tasksById.get(a.taskId);
+    const tB = tasksById.get(b.taskId);
+    const deadA = tA?.deadline || '2026-12-31';
+    const deadB = tB?.deadline || '2026-12-31';
+    if (planSortBy === 'deadline_asc') {
+      const cmp = deadA.localeCompare(deadB);
+      return cmp !== 0 ? cmp : a.number - b.number;
+    }
+    if (planSortBy === 'deadline_desc') {
+      const cmp = deadB.localeCompare(deadA);
+      return cmp !== 0 ? cmp : a.number - b.number;
+    }
+    if (planSortBy === 'title_asc') {
+      return planCollator.compare(a.title, b.title);
+    }
+    if (planSortBy === 'title_desc') {
+      return planCollator.compare(b.title, a.title);
+    }
+    const msA = formatTaskLastModified(tA?.updatedAt, tA?.createdAt).sortMs;
+    const msB = formatTaskLastModified(tB?.updatedAt, tB?.createdAt).sortMs;
+    return planSortBy === 'updated_asc' ? msA - msB : msB - msA;
   });
 
   const accentText = isVictorTheme ? 'text-cyan-300' : 'text-amber-300';
@@ -386,14 +536,14 @@ export const StrategicPlanTracker: React.FC<StrategicPlanTrackerProps> = ({
                 setSelectedStageFilter('all');
               }
             }}
-            className={`min-h-[42px] lg:min-h-0 px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2 cursor-pointer ${
+            className={`min-h-[42px] lg:min-h-0 px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2 cursor-pointer whitespace-nowrap ${
               activeSubTab === 'campos'
                 ? activeTabClass
                 : 'text-neutral-400 hover:text-neutral-200 bg-neutral-950/50 lg:bg-transparent hover:bg-neutral-800/60 border border-neutral-800/80 lg:border-transparent'
             }`}
           >
             <Database className="w-3.5 h-3.5 shrink-0" />
-            <span>1. Campos Nuevos (10)</span>
+            <span>1. Campos Activos ({activeFieldsTotalCount})</span>
           </button>
 
           <button
@@ -403,19 +553,31 @@ export const StrategicPlanTracker: React.FC<StrategicPlanTrackerProps> = ({
                 setSelectedStageFilter('all');
               }
             }}
-            className={`min-h-[42px] lg:min-h-0 px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2 cursor-pointer ${
+            className={`min-h-[42px] lg:min-h-0 px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2 cursor-pointer whitespace-nowrap ${
               activeSubTab === 'reportes'
                 ? activeTabClass
                 : 'text-neutral-400 hover:text-neutral-200 bg-neutral-950/50 lg:bg-transparent hover:bg-neutral-800/60 border border-neutral-800/80 lg:border-transparent'
             }`}
           >
             <BarChart3 className="w-3.5 h-3.5 shrink-0" />
-            <span>2. Catálogo de Reportes (27)</span>
+            <span>2. Reportes Activos ({activeReportsTotalCount})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveSubTab('finalizado')}
+            className={`min-h-[42px] lg:min-h-0 px-3.5 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-2 cursor-pointer whitespace-nowrap ${
+              activeSubTab === 'finalizado'
+                ? 'bg-emerald-500/25 text-emerald-200 border border-emerald-400/60'
+                : 'bg-emerald-950/30 text-emerald-300 hover:bg-emerald-950/50 border border-emerald-500/35'
+            }`}
+          >
+            <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+            <span>FINALIZADO ({allFinalizedPlanItems.length})</span>
           </button>
 
           <button
             onClick={() => setActiveSubTab('rep27_condiciones')}
-            className={`min-h-[42px] lg:min-h-0 px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2 cursor-pointer ${
+            className={`min-h-[42px] lg:min-h-0 px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2 cursor-pointer whitespace-nowrap ${
               activeSubTab === 'rep27_condiciones'
                 ? activeTabClass
                 : 'text-neutral-400 hover:text-neutral-200 bg-neutral-950/50 lg:bg-transparent hover:bg-neutral-800/60 border border-neutral-800/80 lg:border-transparent'
@@ -427,7 +589,7 @@ export const StrategicPlanTracker: React.FC<StrategicPlanTrackerProps> = ({
 
           <button
             onClick={() => setActiveSubTab('direccion')}
-            className={`min-h-[42px] lg:min-h-0 px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2 cursor-pointer ${
+            className={`min-h-[42px] lg:min-h-0 px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2 cursor-pointer whitespace-nowrap ${
               activeSubTab === 'direccion'
                 ? activeTabClass
                 : 'text-neutral-400 hover:text-neutral-200 bg-neutral-950/50 lg:bg-transparent hover:bg-neutral-800/60 border border-neutral-800/80 lg:border-transparent'
@@ -438,7 +600,9 @@ export const StrategicPlanTracker: React.FC<StrategicPlanTrackerProps> = ({
           </button>
         </div>
 
-        {(activeSubTab === 'campos' || activeSubTab === 'reportes') && (
+        {(activeSubTab === 'campos' ||
+          activeSubTab === 'reportes' ||
+          activeSubTab === 'finalizado') && (
           <div className="relative w-full lg:w-64">
             <Search className="w-3.5 h-3.5 text-neutral-500 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
@@ -451,6 +615,97 @@ export const StrategicPlanTracker: React.FC<StrategicPlanTrackerProps> = ({
           </div>
         )}
       </div>
+
+      {/* Sort Bar for Campos, Reportes & FINALIZADO */}
+      {(activeSubTab === 'campos' ||
+        activeSubTab === 'reportes' ||
+        activeSubTab === 'finalizado') && (
+        <div className="p-2.5 px-3 rounded-xl bg-neutral-900/50 border border-neutral-800 flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-0.5 sm:pb-0 sm:flex-wrap">
+            <span className="text-neutral-500 font-semibold px-1 flex items-center gap-1 shrink-0 whitespace-nowrap">
+              <ArrowUpDown className={`w-3.5 h-3.5 shrink-0 ${accentText}`} />
+              <span>Ordenar:</span>
+            </span>
+
+            <button
+              type="button"
+              onClick={() => setPlanSortBy('deadline_asc')}
+              className={`min-h-[32px] px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-1 ${
+                planSortBy === 'deadline_asc'
+                  ? activeTabClass
+                  : 'text-neutral-400 hover:text-neutral-100 hover:bg-neutral-800 border border-transparent'
+              }`}
+            >
+              <ArrowUp className="w-3 h-3 shrink-0" />
+              <span>Fecha Entrega (A → Z · Próximas)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setPlanSortBy('deadline_desc')}
+              className={`min-h-[32px] px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-1 ${
+                planSortBy === 'deadline_desc'
+                  ? activeTabClass
+                  : 'text-neutral-400 hover:text-neutral-100 hover:bg-neutral-800 border border-transparent'
+              }`}
+            >
+              <ArrowDown className="w-3 h-3 shrink-0" />
+              <span>Fecha Entrega (Z → A · Lejanas)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setPlanSortBy('title_asc')}
+              className={`min-h-[32px] px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                planSortBy === 'title_asc'
+                  ? activeTabClass
+                  : 'text-neutral-400 hover:text-neutral-100 hover:bg-neutral-800 border border-transparent'
+              }`}
+            >
+              Nombre A → Z
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setPlanSortBy('title_desc')}
+              className={`min-h-[32px] px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                planSortBy === 'title_desc'
+                  ? activeTabClass
+                  : 'text-neutral-400 hover:text-neutral-100 hover:bg-neutral-800 border border-transparent'
+              }`}
+            >
+              Nombre Z → A
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                setPlanSortBy(planSortBy === 'updated_desc' ? 'updated_asc' : 'updated_desc')
+              }
+              className={`min-h-[32px] px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-1 ${
+                planSortBy === 'updated_desc' || planSortBy === 'updated_asc'
+                  ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-400/40 font-semibold'
+                  : 'text-neutral-400 hover:text-neutral-100 hover:bg-neutral-800 border border-transparent'
+              }`}
+            >
+              <Clock className="w-3 h-3 shrink-0" />
+              <span>Últ. Modificación {planSortBy === 'updated_asc' ? '↑' : '↓'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setPlanSortBy('number_asc')}
+              className={`min-h-[32px] px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                planSortBy === 'number_asc'
+                  ? 'bg-neutral-800 text-neutral-100 border border-neutral-600'
+                  : 'text-neutral-400 hover:text-neutral-100 hover:bg-neutral-800 border border-transparent'
+              }`}
+            >
+              N° Original
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ====================================================================
           SUB-TAB 1: LOS 10 CAMPOS NUEVOS (HACERLOS PRIMERO)
@@ -473,9 +728,10 @@ export const StrategicPlanTracker: React.FC<StrategicPlanTrackerProps> = ({
 
           {/* Mobile & Tablet Stacked Cards (< lg) */}
           <div className="lg:hidden space-y-3">
-            {filteredFields.map((item) => {
+            {sortedFields.map((item) => {
               const task = tasksById.get(item.taskId);
               const isLocked = task?.status === 'finalizado' && !canModifyFinalizedTask;
+              const lastMod = formatTaskLastModified(task?.updatedAt, task?.createdAt);
               return (
                 <div
                   key={item.taskId}
@@ -484,19 +740,27 @@ export const StrategicPlanTracker: React.FC<StrategicPlanTrackerProps> = ({
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-neutral-950 border border-neutral-800 text-neutral-200 tabular-nums">
+                        <span className="font-mono text-xs font-bold text-neutral-200 tabular-nums">
                           Campo #{item.number}
                         </span>
+                        <span className="text-neutral-600" aria-hidden="true">·</span>
                         <span className="font-mono text-[11px] text-neutral-400">{item.system}</span>
                         {item.isBaseline3103 && (
-                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-red-500/15 text-red-300 border border-red-500/30">
-                            Crítico 31/03
-                          </span>
+                          <>
+                            <span className="text-neutral-600" aria-hidden="true">·</span>
+                            <span className="text-[11px] font-semibold text-red-300">
+                              Crítico 31/03
+                            </span>
+                          </>
                         )}
                       </div>
                       <h4 className="font-serif font-bold text-base text-neutral-100 mt-1.5">
                         {item.field}
                       </h4>
+                      <div className="text-[11px] font-mono text-neutral-400 tabular-nums mt-0.5">
+                        Últ. modif.: {lastMod.dateLabel}
+                        {lastMod.timeLabel ? ` · ${lastMod.timeLabel}` : ''}
+                      </div>
                     </div>
                     <span className="text-[11px] font-mono text-neutral-400 tabular-nums shrink-0">
                       Rep. {item.usedInReports.join(', ')}
@@ -511,7 +775,7 @@ export const StrategicPlanTracker: React.FC<StrategicPlanTrackerProps> = ({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
                       <div>
                         <label className="text-[10px] uppercase tracking-wider text-neutral-400 block mb-1">
-                          Fecha Límite
+                          Fecha de Entrega
                         </label>
                         <div className="min-h-[42px] flex items-center bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-1.5">
                           <Calendar className={`w-4 h-4 mr-2 shrink-0 ${accentText}`} />
@@ -623,16 +887,18 @@ export const StrategicPlanTracker: React.FC<StrategicPlanTrackerProps> = ({
               <thead>
                 <tr className="border-b border-neutral-800 bg-neutral-950/80 text-neutral-400 text-[11px] font-semibold">
                   <th className="py-3 px-3 w-[5%]">N°</th>
-                  <th className="py-3 px-3 w-[22%]">Campo, Sistema & Reportes</th>
-                  <th className="py-3 px-3 w-[31%]">Detalle / Lista cerrada</th>
-                  <th className="py-3 px-3 w-[17%]">Fecha Límite & Estado</th>
-                  <th className="py-3 px-3.5 w-[25%]">Observaciones (Click p/ modificar)</th>
+                  <th className="py-3 px-3 w-[21%]">Campo, Sistema & Reportes</th>
+                  <th className="py-3 px-3 w-[28%]">Detalle / Lista cerrada</th>
+                  <th className="py-3 px-2.5 w-[16%]">Fecha Entrega & Estado</th>
+                  <th className="py-3 px-2.5 w-[11%]">Últ. Modif.</th>
+                  <th className="py-3 px-3 w-[19%]">Observaciones (Click p/ modificar)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-800/60">
-                {filteredFields.map((item) => {
+                {sortedFields.map((item) => {
                   const task = tasksById.get(item.taskId);
                   const isLocked = task?.status === 'finalizado' && !canModifyFinalizedTask;
+                  const lastMod = formatTaskLastModified(task?.updatedAt, task?.createdAt);
                   return (
                     <tr key={item.taskId} className="hover:bg-neutral-800/25 transition-colors align-top group">
                       <td className="py-3.5 px-3 font-mono font-bold text-neutral-300 tabular-nums">
@@ -659,11 +925,11 @@ export const StrategicPlanTracker: React.FC<StrategicPlanTrackerProps> = ({
                       <td className="py-3.5 px-3 text-neutral-300 leading-relaxed break-words">
                         {item.detail}
                       </td>
-                      <td className="py-3.5 px-3">
+                      <td className="py-3.5 px-2.5">
                         {task && (
                           <div className="space-y-1.5">
                             <div className="flex items-center bg-neutral-950 border border-neutral-800 hover:border-neutral-600 rounded-lg px-2 py-1">
-                              <Calendar className={`w-3.5 h-3.5 mr-1.5 shrink-0 ${accentText}`} />
+                              <Calendar className={`hidden xl:block w-3.5 h-3.5 mr-1.5 shrink-0 ${accentText}`} />
                               <input
                                 type="date"
                                 value={task.deadline}
@@ -694,7 +960,19 @@ export const StrategicPlanTracker: React.FC<StrategicPlanTrackerProps> = ({
                           </div>
                         )}
                       </td>
-                      <td className="py-3.5 px-3.5 text-neutral-300 break-words">
+                      <td className="py-3.5 px-2.5">
+                        <div className="font-mono text-xs text-neutral-200 tabular-nums whitespace-nowrap">
+                          {lastMod.dateLabel}
+                        </div>
+                        {lastMod.timeLabel ? (
+                          <div className="font-mono text-[11px] text-neutral-400 tabular-nums whitespace-nowrap mt-0.5">
+                            {lastMod.timeLabel}
+                          </div>
+                        ) : (
+                          <div className="text-[11px] text-neutral-500 mt-0.5">Registro base</div>
+                        )}
+                      </td>
+                      <td className="py-3.5 px-3 text-neutral-300 break-words">
                         {task && editingObsId === task.id ? (
                           <div className="space-y-1.5">
                             <textarea
@@ -810,14 +1088,15 @@ export const StrategicPlanTracker: React.FC<StrategicPlanTrackerProps> = ({
 
           {/* Mobile & Tablet Stacked Report Cards (< lg) */}
           <div className="lg:hidden space-y-3">
-            {filteredReports.length === 0 ? (
+            {sortedReports.length === 0 ? (
               <div className="p-8 text-center rounded-2xl bg-neutral-900/60 border border-neutral-800 text-xs text-neutral-500">
                 No hay reportes que coincidan con el filtro seleccionado.
               </div>
             ) : (
-              filteredReports.map((rep) => {
+              sortedReports.map((rep) => {
                 const task = tasksById.get(rep.taskId);
                 const isLocked = task?.status === 'finalizado' && !canModifyFinalizedTask;
+                const lastMod = formatTaskLastModified(task?.updatedAt, task?.createdAt);
                 return (
                   <div
                     key={rep.taskId}
@@ -825,21 +1104,23 @@ export const StrategicPlanTracker: React.FC<StrategicPlanTrackerProps> = ({
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-neutral-950 border border-neutral-800 text-neutral-200 tabular-nums">
+                        <div className="flex items-center gap-1.5 flex-wrap text-xs">
+                          <span className="font-mono font-bold text-neutral-200 tabular-nums">
                             Rep. #{rep.number}
                           </span>
+                          <span className="text-neutral-600" aria-hidden="true">·</span>
                           <span className="font-mono text-[11px] text-neutral-300">{rep.system}</span>
+                          <span className="text-neutral-600" aria-hidden="true">·</span>
                           <span
-                            className={`text-[10px] font-semibold px-2 py-0.5 rounded border ${
+                            className={`text-[11px] font-semibold ${
                               rep.priorityLabel === 'Alta'
-                                ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                                ? 'text-amber-300'
                                 : rep.priorityLabel === 'Media'
-                                ? 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30'
-                                : 'bg-neutral-950 text-neutral-400 border-neutral-800'
+                                ? 'text-cyan-300'
+                                : 'text-neutral-400'
                             }`}
                           >
-                            Prioridad {rep.priorityLabel} · Etapa {rep.developmentStage}
+                            Prioridad {rep.priorityLabel} (Etapa {rep.developmentStage})
                           </span>
                         </div>
                         <h4 className="font-serif font-bold text-base text-neutral-100 mt-1.5">
@@ -853,6 +1134,11 @@ export const StrategicPlanTracker: React.FC<StrategicPlanTrackerProps> = ({
                               <span className={accentText}>{rep.kpiHighlight}</span>
                             </>
                           )}
+                          <span aria-hidden="true">·</span>
+                          <span className="font-mono tabular-nums text-neutral-400">
+                            Últ. modif.: {lastMod.dateLabel}
+                            {lastMod.timeLabel ? ` ${lastMod.timeLabel}` : ''}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -871,7 +1157,7 @@ export const StrategicPlanTracker: React.FC<StrategicPlanTrackerProps> = ({
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                         <div>
                           <label className="text-[10px] uppercase tracking-wider text-neutral-400 block mb-1">
-                            Fecha Límite
+                            Fecha de Entrega
                           </label>
                           <div className="min-h-[42px] flex items-center bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-1.5">
                             <Calendar className={`w-4 h-4 mr-2 shrink-0 ${accentText}`} />
@@ -983,31 +1269,33 @@ export const StrategicPlanTracker: React.FC<StrategicPlanTrackerProps> = ({
             <table className="w-full table-fixed text-left text-xs border-collapse">
               <thead>
                 <tr className="border-b border-neutral-800 bg-neutral-950/80 text-neutral-400 text-[11px] font-semibold">
-                  <th className="py-3 px-2.5 w-[4%]">N°</th>
-                  <th className="py-3 px-3 w-[21%]">Reporte · Bloque & Sistema</th>
-                  <th className="py-3 px-3 w-[25%]">Qué muestra / Cómo se calcula</th>
-                  <th className="py-3 px-3 w-[13%]">Filtros & Frecuencia</th>
-                  <th className="py-3 px-2.5 w-[16%]">Fecha Límite & Estado</th>
-                  <th className="py-3 px-3 w-[21%]">Observaciones (Click p/ modificar)</th>
+                  <th className="py-3 px-2 w-[4%]">N°</th>
+                  <th className="py-3 px-2.5 w-[20%]">Reporte · Bloque & Sistema</th>
+                  <th className="py-3 px-2.5 w-[22%]">Qué muestra / Cómo se calcula</th>
+                  <th className="py-3 px-2.5 w-[12%]">Filtros & Frec.</th>
+                  <th className="py-3 px-2 w-[15%]">Fecha Entrega & Estado</th>
+                  <th className="py-3 px-2 w-[10%]">Últ. Modif.</th>
+                  <th className="py-3 px-2.5 w-[17%]">Observaciones (Click p/ modificar)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-800/60">
-                {filteredReports.length === 0 ? (
+                {sortedReports.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-10 text-center text-neutral-500">
+                    <td colSpan={7} className="py-10 text-center text-neutral-500">
                       No hay reportes que coincidan con el filtro seleccionado.
                     </td>
                   </tr>
                 ) : (
-                  filteredReports.map((rep) => {
+                  sortedReports.map((rep) => {
                     const task = tasksById.get(rep.taskId);
                     const isLocked = task?.status === 'finalizado' && !canModifyFinalizedTask;
+                    const lastMod = formatTaskLastModified(task?.updatedAt, task?.createdAt);
                     return (
                       <tr key={rep.taskId} className="hover:bg-neutral-800/25 transition-colors align-top group">
-                        <td className="py-3.5 px-2.5 font-mono font-bold text-neutral-300 tabular-nums">
+                        <td className="py-3.5 px-2 font-mono font-bold text-neutral-300 tabular-nums">
                           {rep.number}
                         </td>
-                        <td className="py-3.5 px-3 break-words">
+                        <td className="py-3.5 px-2.5 break-words">
                           <div className="font-serif font-bold text-sm text-neutral-100 leading-snug">
                             {rep.name}
                           </div>
@@ -1036,10 +1324,10 @@ export const StrategicPlanTracker: React.FC<StrategicPlanTrackerProps> = ({
                             )}
                           </div>
                         </td>
-                        <td className="py-3.5 px-3 text-neutral-300 leading-relaxed break-words">
+                        <td className="py-3.5 px-2.5 text-neutral-300 leading-relaxed break-words">
                           {rep.whatItShowsAndCalculation}
                         </td>
-                        <td className="py-3.5 px-3 text-neutral-300 break-words space-y-1">
+                        <td className="py-3.5 px-2.5 text-neutral-300 break-words space-y-1">
                           <div>
                             <span className="text-neutral-500">Filtros:</span> {rep.filters}
                           </div>
@@ -1047,11 +1335,11 @@ export const StrategicPlanTracker: React.FC<StrategicPlanTrackerProps> = ({
                             <span className="text-neutral-500">Frec.:</span> {rep.frequency}
                           </div>
                         </td>
-                        <td className="py-3.5 px-2.5">
+                        <td className="py-3.5 px-2">
                           {task && (
                             <div className="space-y-1.5">
                               <div className="flex items-center bg-neutral-950 border border-neutral-800 hover:border-neutral-600 rounded-lg px-2 py-1">
-                                <Calendar className={`w-3.5 h-3.5 mr-1.5 shrink-0 ${accentText}`} />
+                                <Calendar className={`hidden xl:block w-3.5 h-3.5 mr-1.5 shrink-0 ${accentText}`} />
                                 <input
                                   type="date"
                                   value={task.deadline}
@@ -1082,7 +1370,19 @@ export const StrategicPlanTracker: React.FC<StrategicPlanTrackerProps> = ({
                             </div>
                           )}
                         </td>
-                        <td className="py-3.5 px-3 text-neutral-300 break-words">
+                        <td className="py-3.5 px-2">
+                          <div className="font-mono text-xs text-neutral-200 tabular-nums whitespace-nowrap">
+                            {lastMod.dateLabel}
+                          </div>
+                          {lastMod.timeLabel ? (
+                            <div className="font-mono text-[11px] text-neutral-400 tabular-nums whitespace-nowrap mt-0.5">
+                              {lastMod.timeLabel}
+                            </div>
+                          ) : (
+                            <div className="text-[11px] text-neutral-500 mt-0.5">Registro base</div>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-2.5 text-neutral-300 break-words">
                           {task && editingObsId === task.id ? (
                             <div className="space-y-1.5">
                               <textarea
@@ -1134,6 +1434,164 @@ export const StrategicPlanTracker: React.FC<StrategicPlanTrackerProps> = ({
               </tbody>
             </table>
           </div>
+        </section>
+      )}
+
+      {/* ====================================================================
+          SUB-TAB FINALIZADO: BLOQUE DE CAMPOS Y REPORTES FINALIZADOS
+         ==================================================================== */}
+      {activeSubTab === 'finalizado' && (
+        <section className="space-y-4">
+          <div className="px-4 py-3 rounded-xl bg-emerald-950/35 border border-emerald-500/35 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+            <div className="flex items-center gap-2 text-emerald-200">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span>
+                <strong>Bloque FINALIZADO ({sortedFinalizedPlanItems.length}):</strong> campos y reportes ya completados (retirados de las tablas de pendientes activos). Si cambiás su estado, regresan a su pestaña activa.
+              </span>
+            </div>
+          </div>
+
+          {sortedFinalizedPlanItems.length === 0 ? (
+            <div className="p-10 text-center rounded-2xl bg-neutral-900/60 border border-neutral-800 text-neutral-500 text-xs">
+              Todavía no hay campos ni reportes del plan marcados como Finalizado (LISTO).
+            </div>
+          ) : (
+            <>
+              {/* Mobile Cards (< lg) */}
+              <div className="lg:hidden space-y-3">
+                {sortedFinalizedPlanItems.map((row) => {
+                  const task = tasksById.get(row.taskId);
+                  const lastMod = formatTaskLastModified(task?.updatedAt, task?.createdAt);
+                  return (
+                    <div
+                      key={row.taskId}
+                      className="p-4 rounded-2xl bg-neutral-900/80 border border-emerald-900/50 space-y-3 text-xs"
+                    >
+                      <div className="flex items-center gap-1.5 flex-wrap font-mono text-[11px] text-emerald-300">
+                        <span>
+                          {row.kind} #{row.number}
+                        </span>
+                        <span className="text-neutral-600">·</span>
+                        <span className="text-neutral-300">{row.system}</span>
+                        <span className="text-neutral-600">·</span>
+                        <span className="text-neutral-400 tabular-nums">
+                          Últ. modif.: {lastMod.dateLabel}
+                          {lastMod.timeLabel ? ` ${lastMod.timeLabel}` : ''}
+                        </span>
+                      </div>
+                      <h4 className="font-serif font-bold text-base text-neutral-100">
+                        {row.title}
+                      </h4>
+                      <p className="text-neutral-300 leading-relaxed">{row.summary}</p>
+                      {task && (
+                        <div className="grid grid-cols-2 gap-2">
+                          <input
+                            type="date"
+                            value={task.deadline}
+                            onChange={(e) => handleDeadlineChange(task.id, e.target.value)}
+                            className="min-h-[40px] bg-neutral-950 border border-neutral-800 rounded-xl px-2.5 py-1 text-neutral-200 font-mono tabular-nums"
+                          />
+                          <select
+                            value={task.status}
+                            onChange={(e) =>
+                              handleStatusChange(task.id, e.target.value as TaskStatus)
+                            }
+                            className="min-h-[40px] bg-emerald-950/40 text-emerald-300 border border-emerald-500/40 rounded-xl px-2.5 py-1 font-semibold"
+                          >
+                            <option value="finalizado">Finalizado (LISTO)</option>
+                            <option value="en_curso">En Curso</option>
+                            <option value="sin_novedades">Sin Novedades</option>
+                            <option value="terminada">Terminada</option>
+                            <option value="probada">Probada</option>
+                            <option value="bloqueada">Bloqueada</option>
+                          </select>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Desktop Table (lg+) */}
+              <div className="hidden lg:block rounded-2xl border border-emerald-900/40 bg-neutral-900/60 overflow-hidden">
+                <table className="w-full table-fixed text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-neutral-800 bg-neutral-950/80 text-neutral-400 text-[11px] font-semibold">
+                      <th className="py-3 px-3 w-[8%]">Tipo / N°</th>
+                      <th className="py-3 px-3 w-[23%]">Ítem & Sistema</th>
+                      <th className="py-3 px-3 w-[24%]">Detalle / Cálculo</th>
+                      <th className="py-3 px-2.5 w-[16%]">Fecha Entrega & Estado</th>
+                      <th className="py-3 px-2.5 w-[11%]">Últ. Modif.</th>
+                      <th className="py-3 px-3 w-[18%]">Observaciones</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-neutral-800/60">
+                    {sortedFinalizedPlanItems.map((row) => {
+                      const task = tasksById.get(row.taskId);
+                      const lastMod = formatTaskLastModified(task?.updatedAt, task?.createdAt);
+                      return (
+                        <tr key={row.taskId} className="hover:bg-neutral-800/25 align-top">
+                          <td className="py-3.5 px-3 font-mono font-bold text-emerald-300 tabular-nums">
+                            {row.kind} #{row.number}
+                          </td>
+                          <td className="py-3.5 px-3 break-words">
+                            <div className="font-serif font-bold text-sm text-neutral-100">
+                              ✓ {row.title}
+                            </div>
+                            <div className="font-mono text-[11px] text-neutral-400 mt-0.5">
+                              {row.system}
+                            </div>
+                          </td>
+                          <td className="py-3.5 px-3 text-neutral-300 leading-relaxed break-words">
+                            {row.summary}
+                          </td>
+                          <td className="py-3.5 px-2.5">
+                            {task && (
+                              <div className="space-y-1.5">
+                                <input
+                                  type="date"
+                                  value={task.deadline}
+                                  onChange={(e) => handleDeadlineChange(task.id, e.target.value)}
+                                  className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-2 py-1 text-neutral-200 font-mono text-xs tabular-nums cursor-pointer"
+                                />
+                                <select
+                                  value={task.status}
+                                  onChange={(e) =>
+                                    handleStatusChange(task.id, e.target.value as TaskStatus)
+                                  }
+                                  className="w-full bg-emerald-950/40 text-emerald-300 border border-emerald-500/40 rounded-lg px-2 py-1 text-xs font-semibold cursor-pointer"
+                                >
+                                  <option value="finalizado">Finalizado (LISTO)</option>
+                                  <option value="en_curso">En Curso</option>
+                                  <option value="sin_novedades">Sin Novedades</option>
+                                  <option value="terminada">Terminada</option>
+                                  <option value="probada">Probada</option>
+                                  <option value="bloqueada">Bloqueada</option>
+                                </select>
+                              </div>
+                            )}
+                          </td>
+                          <td className="py-3.5 px-2.5">
+                            <div className="font-mono text-xs text-neutral-200 tabular-nums whitespace-nowrap">
+                              {lastMod.dateLabel}
+                            </div>
+                            {lastMod.timeLabel && (
+                              <div className="font-mono text-[11px] text-neutral-400 tabular-nums whitespace-nowrap mt-0.5">
+                                {lastMod.timeLabel}
+                              </div>
+                            )}
+                          </td>
+                          <td className="py-3.5 px-3 text-neutral-300 break-words">
+                            {task?.observations}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
         </section>
       )}
 

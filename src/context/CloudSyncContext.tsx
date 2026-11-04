@@ -26,6 +26,7 @@ import {
   sanitizeDecisionText,
   sanitizeId,
   getOrCreatePublicActorId,
+  extractFirestoreTimestampIso,
 } from '../firebase';
 import { VICTOR_INITIAL_TASKS } from '../data/constelarData';
 import { VICTOR_REPORTES_PACK_TASKS, DIRECTION_PENDING_ITEMS } from '../data/reportsPlanData';
@@ -542,7 +543,12 @@ export const CloudSyncProvider: React.FC<{ children: React.ReactNode }> = ({ chi
               tRef,
               (tSnap) => {
                 if (tSnap.exists()) {
-                  const tData = tSnap.data();
+                  const tData = tSnap.data({ serverTimestamps: 'estimate' });
+                  const resolvedUpdatedAt =
+                    extractFirestoreTimestampIso(tData.updatedAt) ||
+                    extractFirestoreTimestampIso(tData.createdAt) ||
+                    tData.createdDateLabel ||
+                    '2026-10-28';
                   const mapped: VictorTask = sanitizeTaskFields({
                     id: tData.id,
                     title: tData.title,
@@ -554,6 +560,7 @@ export const CloudSyncProvider: React.FC<{ children: React.ReactNode }> = ({ chi
                     observations: tData.observations,
                     specs: tData.specs || '',
                     createdAt: tData.createdDateLabel || '2026-10-28',
+                    updatedAt: resolvedUpdatedAt,
                     createdByUid: tData.createdByUid,
                   });
                   cloudTasksMapRef.current.set(taskId, mapped);
@@ -779,7 +786,10 @@ export const CloudSyncProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const createTask = async (rawTask: VictorTask): Promise<void> => {
-    const clean = sanitizeTaskFields(rawTask);
+    const clean = sanitizeTaskFields({
+      ...rawTask,
+      updatedAt: new Date().toISOString(),
+    });
 
     if (!isWorkspaceReady) {
       setTasks((prev) => [clean, ...prev]);
@@ -848,7 +858,11 @@ export const CloudSyncProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const existing = tasks.find((t) => t.id === taskId);
     if (!existing) return;
 
-    const merged = sanitizeTaskFields({ ...existing, ...updates });
+    const merged = sanitizeTaskFields({
+      ...existing,
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    });
 
     if (!isWorkspaceReady) {
       setTasks((prev) => prev.map((t) => (t.id === taskId ? merged : t)));
@@ -892,6 +906,7 @@ export const CloudSyncProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const clean = sanitizeTaskFields({
       ...updatedTask,
       createdAt: existing.createdAt,
+      updatedAt: new Date().toISOString(),
       createdByUid: existing.createdByUid,
     });
 

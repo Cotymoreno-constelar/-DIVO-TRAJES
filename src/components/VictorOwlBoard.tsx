@@ -5,6 +5,7 @@ import {
   TaskStatus,
   TaskRequester,
   TaskPriority,
+  TaskSortOption,
   DevSuggestion,
 } from '../types/flow';
 import { useCloudSync } from '../context/CloudSyncContext';
@@ -15,6 +16,8 @@ import {
   MAX_MODULE_LENGTH,
   MAX_OBSERVATIONS_LENGTH,
   MAX_SPECS_LENGTH,
+  formatTaskLastModified,
+  sortVictorTasks,
 } from '../firebase';
 import {
   Code2,
@@ -28,6 +31,10 @@ import {
   X,
   Search,
   Printer,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  Clock,
 } from 'lucide-react';
 
 interface VictorOwlBoardProps {
@@ -51,11 +58,12 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
 
   // Filters & View State
   const [filterCategory, setFilterCategory] = useState<
-    'all' | 'campos' | 'reportes' | 'operatividad'
+    'all' | 'campos' | 'reportes' | 'operatividad' | 'finalizado'
   >('all');
   const [filterRequester, setFilterRequester] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [sortBy, setSortBy] = useState<TaskSortOption>('deadline_asc');
   const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table');
 
   // Modal State for New Task
@@ -92,38 +100,49 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
     }, 3000);
   };
 
+  // Separate Active (Main Screen) vs Finalized (Bloque FINALIZADO)
+  const activeTasks = tasks.filter((t) => t.status !== 'finalizado');
+  const finalizedTasks = tasks.filter((t) => t.status === 'finalizado');
+  const isFinalizadoBlock = filterCategory === 'finalizado';
+  const scopeTasks = isFinalizadoBlock ? finalizedTasks : activeTasks;
+
   // Status counters
-  const countFinalizadas = tasks.filter((t) => t.status === 'finalizado').length;
-  const countEnCurso = tasks.filter((t) => t.status === 'en_curso').length;
-  const countSinNovedades = tasks.filter((t) => t.status === 'sin_novedades').length;
-  const countTerminadas = tasks.filter(
+  const countActivas = activeTasks.length;
+  const countFinalizadas = finalizedTasks.length;
+  const countEnCurso = activeTasks.filter((t) => t.status === 'en_curso').length;
+  const countSinNovedades = activeTasks.filter((t) => t.status === 'sin_novedades').length;
+  const countTerminadas = activeTasks.filter(
     (t) => t.status === 'terminada' || t.status === 'probada'
   ).length;
 
-  const countCampos = tasks.filter((t) => t.id.startsWith('campo-divo-')).length;
-  const countReportes = tasks.filter((t) => t.id.startsWith('rep-divo-')).length;
-  const countOperatividad = tasks.filter(
+  // Active block counters (excluding Finalizado)
+  const countCampos = activeTasks.filter((t) => t.id.startsWith('campo-divo-')).length;
+  const countReportes = activeTasks.filter((t) => t.id.startsWith('rep-divo-')).length;
+  const countOperatividad = activeTasks.filter(
     (t) => !t.id.startsWith('campo-divo-') && !t.id.startsWith('rep-divo-')
   ).length;
 
-  // Filter tasks
+  // Filter tasks: Finalizadas ONLY appear inside Bloque FINALIZADO, never on the active main screen
   const filteredTasks = tasks.filter((t) => {
-    if (filterCategory === 'campos' && !t.id.startsWith('campo-divo-')) return false;
-    if (filterCategory === 'reportes' && !t.id.startsWith('rep-divo-')) return false;
-    if (
-      filterCategory === 'operatividad' &&
-      (t.id.startsWith('campo-divo-') || t.id.startsWith('rep-divo-'))
-    ) {
-      return false;
-    }
-
-    if (filterRequester === 'listo') {
+    if (isFinalizadoBlock) {
       if (t.status !== 'finalizado') return false;
-    } else if (filterRequester !== 'all' && t.requestedBy !== filterRequester) {
+    } else {
+      if (t.status === 'finalizado') return false;
+      if (filterCategory === 'campos' && !t.id.startsWith('campo-divo-')) return false;
+      if (filterCategory === 'reportes' && !t.id.startsWith('rep-divo-')) return false;
+      if (
+        filterCategory === 'operatividad' &&
+        (t.id.startsWith('campo-divo-') || t.id.startsWith('rep-divo-'))
+      ) {
+        return false;
+      }
+      if (filterStatus !== 'all' && t.status !== filterStatus) return false;
+    }
+
+    if (filterRequester !== 'all' && t.requestedBy !== filterRequester) {
       return false;
     }
 
-    if (filterStatus !== 'all' && t.status !== filterStatus) return false;
     if (searchQuery.trim() !== '') {
       const q = searchQuery.toLowerCase();
       return (
@@ -136,10 +155,20 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
     return true;
   });
 
+  // Sort tasks by Fecha de Entrega (default A-Z próximas / Z-A lejanas), Alfabético (A-Z / Z-A), or Última Modificación
+  const sortedTasks = sortVictorTasks(filteredTasks, sortBy);
+  const sortedAllTasksForPrint = sortVictorTasks(tasks, sortBy);
+
   // Direct 1-click inline field handlers
   const handleStatusChange = (taskId: string, newStat: TaskStatus) => {
     void updateTaskProgress(taskId, { status: newStat });
-    showToast('Estado guardado en vivo');
+    if (!isFinalizadoBlock && newStat === 'finalizado') {
+      showToast('Solicitud movida al bloque FINALIZADO (guardado en vivo)');
+    } else if (isFinalizadoBlock && newStat !== 'finalizado') {
+      showToast('Solicitud reabierta y devuelta a la pantalla principal');
+    } else {
+      showToast('Estado guardado en vivo');
+    }
   };
 
   const handleDeadlineChange = (taskId: string, newDate: string) => {
@@ -380,30 +409,14 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
               <div className="grid grid-cols-4 gap-1.5 sm:gap-2 text-xs w-full sm:w-auto">
                 <button
                   type="button"
-                  onClick={() =>
-                    setFilterStatus(filterStatus === 'finalizado' ? 'all' : 'finalizado')
-                  }
+                  onClick={() => {
+                    if (isFinalizadoBlock) setFilterCategory('all');
+                    setFilterStatus(
+                      !isFinalizadoBlock && filterStatus === 'en_curso' ? 'all' : 'en_curso'
+                    );
+                  }}
                   className={`px-2.5 py-1.5 rounded-xl border text-left transition-colors cursor-pointer ${
-                    filterStatus === 'finalizado'
-                      ? 'bg-emerald-950/60 border-emerald-400 text-emerald-200'
-                      : 'bg-emerald-950/20 border-emerald-500/35 text-emerald-300 hover:bg-emerald-950/40'
-                  }`}
-                >
-                  <span className="text-[10px] block text-emerald-400 font-medium truncate">
-                    Finalizadas
-                  </span>
-                  <span className="text-sm sm:text-base font-bold font-mono tabular-nums">
-                    {countFinalizadas}
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setFilterStatus(filterStatus === 'en_curso' ? 'all' : 'en_curso')
-                  }
-                  className={`px-2.5 py-1.5 rounded-xl border text-left transition-colors cursor-pointer ${
-                    filterStatus === 'en_curso'
+                    !isFinalizadoBlock && filterStatus === 'en_curso'
                       ? 'bg-blue-950/60 border-blue-400 text-blue-200'
                       : 'bg-blue-950/20 border-blue-500/30 text-blue-300 hover:bg-blue-950/40'
                   }`}
@@ -418,13 +431,16 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
 
                 <button
                   type="button"
-                  onClick={() =>
+                  onClick={() => {
+                    if (isFinalizadoBlock) setFilterCategory('all');
                     setFilterStatus(
-                      filterStatus === 'sin_novedades' ? 'all' : 'sin_novedades'
-                    )
-                  }
+                      !isFinalizadoBlock && filterStatus === 'sin_novedades'
+                        ? 'all'
+                        : 'sin_novedades'
+                    );
+                  }}
                   className={`px-2.5 py-1.5 rounded-xl border text-left transition-colors cursor-pointer ${
-                    filterStatus === 'sin_novedades'
+                    !isFinalizadoBlock && filterStatus === 'sin_novedades'
                       ? 'bg-neutral-800 border-neutral-500 text-neutral-100'
                       : 'bg-neutral-950/70 border-neutral-800 text-neutral-300 hover:bg-neutral-900'
                   }`}
@@ -439,11 +455,14 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
 
                 <button
                   type="button"
-                  onClick={() =>
-                    setFilterStatus(filterStatus === 'terminada' ? 'all' : 'terminada')
-                  }
+                  onClick={() => {
+                    if (isFinalizadoBlock) setFilterCategory('all');
+                    setFilterStatus(
+                      !isFinalizadoBlock && filterStatus === 'terminada' ? 'all' : 'terminada'
+                    );
+                  }}
                   className={`px-2.5 py-1.5 rounded-xl border text-left transition-colors cursor-pointer ${
-                    filterStatus === 'terminada'
+                    !isFinalizadoBlock && filterStatus === 'terminada'
                       ? 'bg-amber-950/60 border-amber-400 text-amber-200'
                       : 'bg-amber-950/20 border-amber-500/30 text-amber-300 hover:bg-amber-950/40'
                   }`}
@@ -453,6 +472,27 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                   </span>
                   <span className="text-sm sm:text-base font-bold font-mono tabular-nums">
                     {countTerminadas}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFilterCategory(isFinalizadoBlock ? 'all' : 'finalizado');
+                    setFilterStatus('all');
+                  }}
+                  className={`px-2.5 py-1.5 rounded-xl border text-left transition-colors cursor-pointer ${
+                    isFinalizadoBlock
+                      ? 'bg-emerald-950/70 border-emerald-400 text-emerald-200'
+                      : 'bg-emerald-950/20 border-emerald-500/35 text-emerald-300 hover:bg-emerald-950/40'
+                  }`}
+                  title="Abrir Bloque FINALIZADO"
+                >
+                  <span className="text-[10px] block text-emerald-400 font-medium truncate">
+                    Finalizado
+                  </span>
+                  <span className="text-sm sm:text-base font-bold font-mono tabular-nums">
+                    {countFinalizadas}
                   </span>
                 </button>
               </div>
@@ -469,13 +509,14 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
 
           {/* Unified Compact Filters & Search Toolbar */}
           <div className="p-3 rounded-2xl bg-neutral-900/60 border border-neutral-800 space-y-2.5 text-xs">
-            {/* Row 1: Category Blocks + Technical Doc Link */}
+            {/* Row 1: Category Blocks (Activas + Operatividad + Campos + Reportes + FINALIZADO) */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2">
               <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-0.5 lg:pb-0 lg:flex-wrap">
                 <span className="text-neutral-500 font-semibold px-1 hidden sm:inline shrink-0">
                   Bloque:
                 </span>
                 <button
+                  type="button"
                   onClick={() => setFilterCategory('all')}
                   className={`min-h-[34px] px-2.5 py-1 rounded-lg font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
                     filterCategory === 'all'
@@ -483,9 +524,10 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                       : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800 border border-transparent'
                   }`}
                 >
-                  Todo ({tasks.length})
+                  Activas ({countActivas})
                 </button>
                 <button
+                  type="button"
                   onClick={() => setFilterCategory('operatividad')}
                   className={`min-h-[34px] px-2.5 py-1 rounded-lg font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
                     filterCategory === 'operatividad'
@@ -496,6 +538,7 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                   Operatividad Inicial ({countOperatividad})
                 </button>
                 <button
+                  type="button"
                   onClick={() => setFilterCategory('campos')}
                   className={`min-h-[34px] px-2.5 py-1 rounded-lg font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
                     filterCategory === 'campos'
@@ -506,6 +549,7 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                   1. Campos Nuevos ({countCampos})
                 </button>
                 <button
+                  type="button"
                   onClick={() => setFilterCategory('reportes')}
                   className={`min-h-[34px] px-2.5 py-1 rounded-lg font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
                     filterCategory === 'reportes'
@@ -514,6 +558,22 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                   }`}
                 >
                   2. Reportes ({countReportes})
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFilterCategory('finalizado');
+                    setFilterStatus('all');
+                  }}
+                  className={`min-h-[34px] px-3 py-1 rounded-lg font-bold transition-colors cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
+                    isFinalizadoBlock
+                      ? 'bg-emerald-500/25 text-emerald-200 border border-emerald-400/60 shadow-sm shadow-emerald-500/10'
+                      : 'bg-emerald-950/30 text-emerald-300 hover:bg-emerald-950/50 border border-emerald-500/35'
+                  }`}
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                  <span>FINALIZADO ({countFinalizadas})</span>
                 </button>
               </div>
 
@@ -534,6 +594,7 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                   Solicita:
                 </span>
                 <button
+                  type="button"
                   onClick={() => setFilterRequester('all')}
                   className={`min-h-[34px] px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
                     filterRequester === 'all'
@@ -541,19 +602,10 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                       : 'text-neutral-400 hover:text-white hover:bg-neutral-800 border border-transparent'
                   }`}
                 >
-                  Todas ({tasks.length})
+                  Todas ({scopeTasks.length})
                 </button>
                 <button
-                  onClick={() => setFilterRequester('listo')}
-                  className={`min-h-[34px] px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
-                    filterRequester === 'listo'
-                      ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-400/50 font-semibold'
-                      : 'text-neutral-400 hover:text-white hover:bg-neutral-800 border border-transparent'
-                  }`}
-                >
-                  Solo LISTO ({countFinalizadas})
-                </button>
-                <button
+                  type="button"
                   onClick={() => setFilterRequester('Coty')}
                   className={`min-h-[34px] px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
                     filterRequester === 'Coty'
@@ -561,9 +613,10 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                       : 'text-neutral-400 hover:text-white hover:bg-neutral-800 border border-transparent'
                   }`}
                 >
-                  Coty ({tasks.filter((t) => t.requestedBy === 'Coty').length})
+                  Coty ({scopeTasks.filter((t) => t.requestedBy === 'Coty').length})
                 </button>
                 <button
+                  type="button"
                   onClick={() => setFilterRequester('Yasmín')}
                   className={`min-h-[34px] px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
                     filterRequester === 'Yasmín'
@@ -571,8 +624,35 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                       : 'text-neutral-400 hover:text-white hover:bg-neutral-800 border border-transparent'
                   }`}
                 >
-                  Yasmín ({tasks.filter((t) => t.requestedBy === 'Yasmín').length})
+                  Yasmín ({scopeTasks.filter((t) => t.requestedBy === 'Yasmín').length})
                 </button>
+                {scopeTasks.some((t) => t.requestedBy === 'Sucursales') && (
+                  <button
+                    type="button"
+                    onClick={() => setFilterRequester('Sucursales')}
+                    className={`min-h-[34px] px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                      filterRequester === 'Sucursales'
+                        ? 'bg-purple-500/20 text-purple-200 border border-purple-400/40 font-semibold'
+                        : 'text-neutral-400 hover:text-white hover:bg-neutral-800 border border-transparent'
+                    }`}
+                  >
+                    Sucursales ({scopeTasks.filter((t) => t.requestedBy === 'Sucursales').length})
+                  </button>
+                )}
+                {scopeTasks.some((t) => t.requestedBy === 'Administración') && (
+                  <button
+                    type="button"
+                    onClick={() => setFilterRequester('Administración')}
+                    className={`min-h-[34px] px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                      filterRequester === 'Administración'
+                        ? 'bg-indigo-500/20 text-indigo-200 border border-indigo-400/40 font-semibold'
+                        : 'text-neutral-400 hover:text-white hover:bg-neutral-800 border border-transparent'
+                    }`}
+                  >
+                    Administración (
+                    {scopeTasks.filter((t) => t.requestedBy === 'Administración').length})
+                  </button>
+                )}
               </div>
 
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full lg:w-auto">
@@ -589,17 +669,26 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
 
                 <div className="flex items-center gap-2">
                   <select
-                    value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value)}
+                    value={isFinalizadoBlock ? 'finalizado' : filterStatus}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === 'finalizado') {
+                        setFilterCategory('finalizado');
+                        setFilterStatus('all');
+                      } else {
+                        if (isFinalizadoBlock) setFilterCategory('all');
+                        setFilterStatus(val);
+                      }
+                    }}
                     className="min-h-[36px] flex-1 sm:flex-initial bg-neutral-950 border border-neutral-800 rounded-xl px-2.5 py-1 text-neutral-300 text-xs focus:outline-none cursor-pointer"
                   >
-                    <option value="all">Todos los Estados</option>
-                    <option value="finalizado">Finalizado (LISTO)</option>
+                    <option value="all">Todos los Pendientes</option>
                     <option value="en_curso">En Curso</option>
                     <option value="sin_novedades">Sin Novedades</option>
                     <option value="terminada">Terminada</option>
                     <option value="probada">Probada</option>
                     <option value="bloqueada">Bloqueada</option>
+                    <option value="finalizado">Bloque FINALIZADO (LISTO)</option>
                   </select>
 
                   <div className="flex rounded-xl bg-neutral-950 p-0.5 border border-neutral-800 shrink-0">
@@ -627,7 +716,110 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                 </div>
               </div>
             </div>
+
+            {/* Row 3: Sort Controls — Fecha de Entrega (A-Z / Z-A), Alfabético (A-Z / Z-A), Última Modificación */}
+            <div className="pt-2 border-t border-neutral-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-0.5 sm:pb-0 sm:flex-wrap">
+                <span className="text-neutral-500 font-semibold px-1 flex items-center gap-1 shrink-0 whitespace-nowrap">
+                  <ArrowUpDown className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                  <span>Ordenar:</span>
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() => setSortBy('deadline_asc')}
+                  className={`min-h-[32px] px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-1 ${
+                    sortBy === 'deadline_asc'
+                      ? 'bg-cyan-500/20 text-cyan-200 border border-cyan-400/45 font-semibold'
+                      : 'text-neutral-400 hover:text-neutral-100 hover:bg-neutral-800 border border-transparent'
+                  }`}
+                  title="Ordenar por Fecha de Entrega de más próxima a más lejana (A → Z)"
+                >
+                  <ArrowUp className="w-3 h-3 shrink-0" />
+                  <span>Fecha Entrega (A → Z · Próximas)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSortBy('deadline_desc')}
+                  className={`min-h-[32px] px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-1 ${
+                    sortBy === 'deadline_desc'
+                      ? 'bg-cyan-500/20 text-cyan-200 border border-cyan-400/45 font-semibold'
+                      : 'text-neutral-400 hover:text-neutral-100 hover:bg-neutral-800 border border-transparent'
+                  }`}
+                  title="Ordenar por Fecha de Entrega de más lejana a más próxima (Z → A)"
+                >
+                  <ArrowDown className="w-3 h-3 shrink-0" />
+                  <span>Fecha Entrega (Z → A · Lejanas)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSortBy('title_asc')}
+                  className={`min-h-[32px] px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                    sortBy === 'title_asc'
+                      ? 'bg-amber-500/20 text-amber-200 border border-amber-400/45 font-semibold'
+                      : 'text-neutral-400 hover:text-neutral-100 hover:bg-neutral-800 border border-transparent'
+                  }`}
+                >
+                  Solicitud A → Z
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSortBy('title_desc')}
+                  className={`min-h-[32px] px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                    sortBy === 'title_desc'
+                      ? 'bg-amber-500/20 text-amber-200 border border-amber-400/45 font-semibold'
+                      : 'text-neutral-400 hover:text-neutral-100 hover:bg-neutral-800 border border-transparent'
+                  }`}
+                >
+                  Solicitud Z → A
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSortBy(sortBy === 'updated_desc' ? 'updated_asc' : 'updated_desc')
+                  }
+                  className={`min-h-[32px] px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-1 ${
+                    sortBy === 'updated_desc' || sortBy === 'updated_asc'
+                      ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-400/45 font-semibold'
+                      : 'text-neutral-400 hover:text-neutral-100 hover:bg-neutral-800 border border-transparent'
+                  }`}
+                >
+                  <Clock className="w-3 h-3 shrink-0" />
+                  <span>
+                    Últ. Modificación {sortBy === 'updated_asc' ? '↑' : '↓'}
+                  </span>
+                </button>
+              </div>
+
+              <span className="text-[11px] text-neutral-500 font-mono tabular-nums whitespace-nowrap shrink-0">
+                Mostrando {sortedTasks.length} de {scopeTasks.length}{' '}
+                {isFinalizadoBlock ? 'finalizadas' : 'activas'}
+              </span>
+            </div>
           </div>
+
+          {/* Active Context Strip when inside Bloque FINALIZADO */}
+          {isFinalizadoBlock && (
+            <div className="px-4 py-2.5 rounded-xl bg-emerald-950/35 border border-emerald-500/35 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+              <div className="flex items-center gap-2 text-emerald-200">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>
+                  <strong>Bloque FINALIZADO:</strong> estas solicitudes ya no figuran en la pantalla principal de pendientes. Si cambiás el estado de alguna, vuelve automáticamente al tablero activo.
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFilterCategory('all')}
+                className="min-h-[34px] px-3 py-1 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-neutral-200 border border-neutral-700 font-semibold cursor-pointer whitespace-nowrap shrink-0"
+              >
+                ← Volver a Solicitudes Activas ({countActivas})
+              </button>
+            </div>
+          )}
 
           {/* ===============================================================
               MAIN BOARD: 100%-VIEWPORT-FITTING TABLE OR KANBAN
@@ -636,16 +828,17 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
             <>
               {/* Mobile & Tablet Stacked Cards (< lg) — 100% visible & inline modifiable */}
               <div className="lg:hidden space-y-3">
-                {filteredTasks.length === 0 ? (
+                {sortedTasks.length === 0 ? (
                   <div className="p-8 text-center rounded-2xl bg-neutral-900/60 border border-neutral-800 text-neutral-500 text-xs">
                     No se encontraron solicitudes con los filtros actuales.
                   </div>
                 ) : (
-                  filteredTasks.map((task) => {
+                  sortedTasks.map((task) => {
                     const isRowEditing = inlineEditTask?.id === task.id;
                     const canDeleteThis =
                       canDeleteTasks &&
                       (task.status !== 'finalizado' || canDeleteFinalizedTask);
+                    const lastMod = formatTaskLastModified(task.updatedAt, task.createdAt);
 
                     return (
                       <div
@@ -851,8 +1044,15 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                           <>
                             <div className="flex items-start justify-between gap-2">
                               <div className="space-y-1 min-w-0">
-                                <div className="text-[11px] font-mono text-cyan-300">
-                                  {task.module}
+                                <div className="text-[11px] font-mono flex items-center gap-1.5 flex-wrap">
+                                  <span className="text-cyan-300">{task.module}</span>
+                                  <span className="text-neutral-600" aria-hidden="true">
+                                    ·
+                                  </span>
+                                  <span className="text-neutral-400 tabular-nums">
+                                    Últ. modif.: {lastMod.dateLabel}
+                                    {lastMod.timeLabel ? ` ${lastMod.timeLabel}` : ''}
+                                  </span>
                                 </div>
                                 <h4 className="font-serif font-bold text-base text-neutral-100 leading-snug flex items-start gap-1.5">
                                   {task.status === 'finalizado' && (
@@ -984,7 +1184,7 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
 
                               <div>
                                 <label className="text-[10px] text-cyan-300/90 block mb-1">
-                                  Fecha Límite
+                                  Fecha de Entrega
                                 </label>
                                 <div className="min-h-[40px] flex items-center bg-neutral-950 border border-neutral-800 rounded-xl px-2.5 py-1">
                                   <Calendar className="w-3.5 h-3.5 text-cyan-400 mr-1.5 shrink-0" />
@@ -1124,39 +1324,97 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                 <table className="w-full table-fixed text-left text-xs border-collapse">
                   <thead>
                     <tr className="border-b border-neutral-800 bg-neutral-950/85 text-neutral-400 text-[11px] font-semibold">
-                      <th className="py-3 px-4 w-[35%]">
-                        Solicitud a Víctor · Módulo & Especificaciones
+                      <th className="py-3 px-3.5 w-[30%]">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSortBy(sortBy === 'title_asc' ? 'title_desc' : 'title_asc')
+                          }
+                          className="inline-flex items-center gap-1.5 hover:text-neutral-100 transition-colors cursor-pointer text-left"
+                          title="Ordenar Solicitudes A → Z o Z → A"
+                        >
+                          <span>Solicitud a Víctor · Módulo & Specs</span>
+                          {sortBy === 'title_asc' ? (
+                            <span className="text-amber-300 font-mono text-[10px] whitespace-nowrap">
+                              A→Z
+                            </span>
+                          ) : sortBy === 'title_desc' ? (
+                            <span className="text-amber-300 font-mono text-[10px] whitespace-nowrap">
+                              Z→A
+                            </span>
+                          ) : (
+                            <ArrowUpDown className="w-3 h-3 text-neutral-600 shrink-0" />
+                          )}
+                        </button>
                       </th>
-                      <th className="py-3 px-2.5 w-[13%]">
+                      <th className="py-3 px-2 w-[12%]">
                         Solicita & Prioridad
                       </th>
-                      <th className="py-3 px-2.5 w-[16%]">
-                        <span className="flex items-center gap-1.5 text-cyan-300">
+                      <th className="py-3 px-2 w-[16%]">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSortBy(
+                              sortBy === 'deadline_asc' ? 'deadline_desc' : 'deadline_asc'
+                            )
+                          }
+                          className="inline-flex items-center gap-1 text-cyan-300 hover:text-cyan-200 transition-colors cursor-pointer text-left"
+                          title="Alternar orden por Fecha de Entrega (A → Z próximas / Z → A lejanas)"
+                        >
                           <Calendar className="w-3.5 h-3.5 shrink-0" />
-                          <span>Fecha Límite & Estado</span>
-                        </span>
+                          <span>Fecha Entrega & Estado</span>
+                          {sortBy === 'deadline_asc' ? (
+                            <ArrowUp className="w-3.5 h-3.5 text-cyan-300 shrink-0" />
+                          ) : sortBy === 'deadline_desc' ? (
+                            <ArrowDown className="w-3.5 h-3.5 text-cyan-300 shrink-0" />
+                          ) : (
+                            <ArrowUpDown className="w-3 h-3 text-cyan-500/60 shrink-0" />
+                          )}
+                        </button>
                       </th>
-                      <th className="py-3 px-3.5 w-[26%]">
-                        Observaciones & Avance (Click para modificar)
+                      <th className="py-3 px-2 w-[11%]">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSortBy(
+                              sortBy === 'updated_desc' ? 'updated_asc' : 'updated_desc'
+                            )
+                          }
+                          className="inline-flex items-center gap-1 hover:text-neutral-100 transition-colors cursor-pointer text-left"
+                          title="Ordenar por fecha de última modificación"
+                        >
+                          <span>Últ. Modif.</span>
+                          {sortBy === 'updated_desc' ? (
+                            <ArrowDown className="w-3 h-3 text-emerald-300 shrink-0" />
+                          ) : sortBy === 'updated_asc' ? (
+                            <ArrowUp className="w-3 h-3 text-emerald-300 shrink-0" />
+                          ) : (
+                            <ArrowUpDown className="w-3 h-3 text-neutral-600 shrink-0" />
+                          )}
+                        </button>
                       </th>
-                      <th className="py-3 px-3 w-[10%] text-right">
+                      <th className="py-3 px-3 w-[22%]">
+                        Observaciones & Avance (Click p/ modificar)
+                      </th>
+                      <th className="py-3 px-2.5 w-[9%] text-right">
                         Modificar
                       </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-neutral-800/70">
-                    {filteredTasks.length === 0 ? (
+                    {sortedTasks.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="text-center py-12 text-neutral-500 text-sm">
+                        <td colSpan={6} className="text-center py-12 text-neutral-500 text-sm">
                           No se encontraron solicitudes con los filtros actuales.
                         </td>
                       </tr>
                     ) : (
-                      filteredTasks.map((task) => {
+                      sortedTasks.map((task) => {
                         const isRowEditing = inlineEditTask?.id === task.id;
                         const canDeleteThis =
                           canDeleteTasks &&
                           (task.status !== 'finalizado' || canDeleteFinalizedTask);
+                        const lastMod = formatTaskLastModified(task.updatedAt, task.createdAt);
 
                         return (
                           <tr
@@ -1360,14 +1618,14 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                               </div>
                             </td>
 
-                            {/* COL 3 (16%): Modifiable Deadline + Modifiable Status (Active on ALL rows) */}
-                            <td className="py-3.5 px-2.5">
+                            {/* COL 3 (16%): Modifiable Fecha de Entrega + Modifiable Status */}
+                            <td className="py-3.5 px-2">
                               <div className="space-y-1.5">
                                 <div
                                   className="flex items-center bg-neutral-950 hover:bg-neutral-900 border border-neutral-800 hover:border-cyan-500/60 rounded-lg px-2 py-1 transition-colors cursor-pointer"
-                                  title="Clic para modificar fecha límite"
+                                  title="Clic para modificar fecha de entrega"
                                 >
-                                  <Calendar className="w-3.5 h-3.5 text-cyan-400 mr-1.5 shrink-0" />
+                                  <Calendar className="hidden xl:block w-3.5 h-3.5 text-cyan-400 mr-1.5 shrink-0" />
                                   <input
                                     type="date"
                                     value={
@@ -1454,8 +1712,24 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                               </div>
                             </td>
 
-                            {/* COL 4 (26%): Full Observations & Avance (Complete text, zero clipping, editable inline) */}
-                            <td className="py-3.5 px-3.5 text-xs text-neutral-200 break-words">
+                            {/* COL 4 (11%): Última Modificación (Live Server Timestamp) */}
+                            <td className="py-3.5 px-2">
+                              <div className="font-mono text-xs text-neutral-200 tabular-nums whitespace-nowrap">
+                                {lastMod.dateLabel}
+                              </div>
+                              {lastMod.timeLabel ? (
+                                <div className="font-mono text-[11px] text-neutral-400 tabular-nums whitespace-nowrap mt-0.5">
+                                  {lastMod.timeLabel}
+                                </div>
+                              ) : (
+                                <div className="text-[11px] text-neutral-500 mt-0.5">
+                                  Registro base
+                                </div>
+                              )}
+                            </td>
+
+                            {/* COL 5 (22%): Full Observations & Avance (Complete text, zero clipping, editable inline) */}
+                            <td className="py-3.5 px-3 text-xs text-neutral-200 break-words">
                               {isRowEditing && inlineEditTask ? (
                                 <div>
                                   <label className="text-[10px] text-cyan-300 font-semibold block mb-0.5">
@@ -1590,46 +1864,50 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                 </table>
               </div>
             </>
-          ) : (
-            /* Kanban View: 1 col mobile, 2 cols tablet, 4 cols xl desktop */
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-              {/* Column 1: Finalizado / LISTO */}
-              <div className="p-4 rounded-2xl bg-neutral-900/60 border border-emerald-900/40 space-y-3">
-                <div className="flex items-center justify-between pb-2 border-b border-neutral-800">
-                  <span className="text-xs font-serif font-bold text-emerald-300">
-                    Finalizado (LISTO)
-                  </span>
-                  <span className="text-xs font-mono text-emerald-300 font-bold tabular-nums">
-                    {filteredTasks.filter((t) => t.status === 'finalizado').length}
-                  </span>
-                </div>
-                <div className="space-y-2.5">
-                  {filteredTasks
-                    .filter((t) => t.status === 'finalizado')
-                    .map((t) => (
-                      <KanbanCard
-                        key={t.id}
-                        task={t}
-                        onStatusChange={handleStatusChange}
-                        onDeadlineChange={handleDeadlineChange}
-                        onEdit={() => setEditingTask(t)}
-                      />
-                    ))}
-                </div>
+          ) : isFinalizadoBlock ? (
+            /* Kanban View inside Bloque FINALIZADO */
+            <div className="p-4 rounded-2xl bg-neutral-900/60 border border-emerald-900/40 space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-neutral-800">
+                <span className="text-xs font-serif font-bold text-emerald-300">
+                  Bloque FINALIZADO (LISTO)
+                </span>
+                <span className="text-xs font-mono text-emerald-300 font-bold tabular-nums">
+                  {sortedTasks.length}
+                </span>
               </div>
-
-              {/* Column 2: En Curso */}
+              {sortedTasks.length === 0 ? (
+                <div className="py-8 text-center text-neutral-500 text-xs">
+                  No hay solicitudes finalizadas con el filtro actual.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                  {sortedTasks.map((t) => (
+                    <KanbanCard
+                      key={t.id}
+                      task={t}
+                      onStatusChange={handleStatusChange}
+                      onDeadlineChange={handleDeadlineChange}
+                      onEdit={() => setEditingTask(t)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            /* Kanban View on Main Active Screen: 3 Active Columns (Finalizadas viven en Bloque FINALIZADO) */
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Column 1: En Curso */}
               <div className="p-4 rounded-2xl bg-neutral-900/60 border border-blue-900/40 space-y-3">
                 <div className="flex items-center justify-between pb-2 border-b border-neutral-800">
                   <span className="text-xs font-serif font-bold text-blue-300">
                     En Curso (Víctor)
                   </span>
                   <span className="text-xs font-mono text-blue-300 font-bold tabular-nums">
-                    {filteredTasks.filter((t) => t.status === 'en_curso').length}
+                    {sortedTasks.filter((t) => t.status === 'en_curso').length}
                   </span>
                 </div>
                 <div className="space-y-2.5">
-                  {filteredTasks
+                  {sortedTasks
                     .filter((t) => t.status === 'en_curso')
                     .map((t) => (
                       <KanbanCard
@@ -1643,18 +1921,18 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                 </div>
               </div>
 
-              {/* Column 3: Sin Novedades */}
+              {/* Column 2: Sin Novedades */}
               <div className="p-4 rounded-2xl bg-neutral-900/60 border border-neutral-800 space-y-3">
                 <div className="flex items-center justify-between pb-2 border-b border-neutral-800">
                   <span className="text-xs font-serif font-bold text-neutral-300">
                     Sin Novedades
                   </span>
                   <span className="text-xs font-mono text-neutral-400 font-bold tabular-nums">
-                    {filteredTasks.filter((t) => t.status === 'sin_novedades').length}
+                    {sortedTasks.filter((t) => t.status === 'sin_novedades').length}
                   </span>
                 </div>
                 <div className="space-y-2.5">
-                  {filteredTasks
+                  {sortedTasks
                     .filter((t) => t.status === 'sin_novedades')
                     .map((t) => (
                       <KanbanCard
@@ -1668,7 +1946,7 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                 </div>
               </div>
 
-              {/* Column 4: Terminada / Pendiente Prueba */}
+              {/* Column 3: Terminada / Pendiente Prueba */}
               <div className="p-4 rounded-2xl bg-neutral-900/60 border border-amber-900/40 space-y-3">
                 <div className="flex items-center justify-between pb-2 border-b border-neutral-800">
                   <span className="text-xs font-serif font-bold text-amber-300">
@@ -1676,7 +1954,7 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                   </span>
                   <span className="text-xs font-mono text-amber-300 font-bold tabular-nums">
                     {
-                      filteredTasks.filter(
+                      sortedTasks.filter(
                         (t) =>
                           t.status === 'terminada' ||
                           t.status === 'probada' ||
@@ -1686,7 +1964,7 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
                   </span>
                 </div>
                 <div className="space-y-2.5">
-                  {filteredTasks
+                  {sortedTasks
                     .filter(
                       (t) =>
                         t.status === 'terminada' ||
@@ -1835,39 +2113,47 @@ export const VictorOwlBoard: React.FC<VictorOwlBoardProps> = ({
               <table className="w-full table-fixed text-left text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-neutral-700 print:border-neutral-400 text-neutral-400 print:text-black text-[11px]">
-                    <th className="py-2 pr-3 w-[48%]">Solicitud & Observaciones</th>
-                    <th className="py-2 px-2 w-[16%]">Módulo</th>
-                    <th className="py-2 px-2 w-[12%]">Solicita</th>
-                    <th className="py-2 px-2 w-[12%]">Fecha Límite</th>
-                    <th className="py-2 pl-2 w-[12%]">Estado</th>
+                    <th className="py-2 pr-3 w-[41%]">Solicitud & Observaciones</th>
+                    <th className="py-2 px-2 w-[14%]">Módulo</th>
+                    <th className="py-2 px-2 w-[10%]">Solicita</th>
+                    <th className="py-2 px-2 w-[12%]">Fecha Entrega</th>
+                    <th className="py-2 px-2 w-[12%]">Últ. Modif.</th>
+                    <th className="py-2 pl-2 w-[11%]">Estado</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-800 print:divide-neutral-300">
-                  {tasks.map((t) => (
-                    <tr key={t.id} className="align-top">
-                      <td className="py-2.5 pr-3 break-words">
-                        <div className="font-semibold text-neutral-100 print:text-black">
-                          {t.title}
-                        </div>
-                        {t.specs && (
-                          <div className="text-[11px] text-neutral-300 print:text-neutral-700 mt-0.5">
-                            Specs: {t.specs}
+                  {sortedAllTasksForPrint.map((t) => {
+                    const lastMod = formatTaskLastModified(t.updatedAt, t.createdAt);
+                    return (
+                      <tr key={t.id} className="align-top">
+                        <td className="py-2.5 pr-3 break-words">
+                          <div className="font-semibold text-neutral-100 print:text-black">
+                            {t.title}
                           </div>
-                        )}
-                        <div className="text-[11px] text-neutral-400 print:text-neutral-600 mt-0.5">
-                          {t.observations}
-                        </div>
-                      </td>
-                      <td className="py-2.5 px-2 font-mono text-[11px] text-cyan-300 print:text-neutral-800 break-words">
-                        {t.module}
-                      </td>
-                      <td className="py-2.5 px-2">{t.requestedBy}</td>
-                      <td className="py-2.5 px-2 font-mono tabular-nums">{t.deadline}</td>
-                      <td className="py-2.5 pl-2 font-semibold">
-                        {getStatusLabel(t.status)}
-                      </td>
-                    </tr>
-                  ))}
+                          {t.specs && (
+                            <div className="text-[11px] text-neutral-300 print:text-neutral-700 mt-0.5">
+                              Specs: {t.specs}
+                            </div>
+                          )}
+                          <div className="text-[11px] text-neutral-400 print:text-neutral-600 mt-0.5">
+                            {t.observations}
+                          </div>
+                        </td>
+                        <td className="py-2.5 px-2 font-mono text-[11px] text-cyan-300 print:text-neutral-800 break-words">
+                          {t.module}
+                        </td>
+                        <td className="py-2.5 px-2">{t.requestedBy}</td>
+                        <td className="py-2.5 px-2 font-mono tabular-nums">{t.deadline}</td>
+                        <td className="py-2.5 px-2 font-mono tabular-nums text-[11px] text-neutral-300 print:text-neutral-700">
+                          {lastMod.dateLabel}
+                          {lastMod.timeLabel ? ` · ${lastMod.timeLabel}` : ''}
+                        </td>
+                        <td className="py-2.5 pl-2 font-semibold">
+                          {getStatusLabel(t.status)}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -2257,6 +2543,8 @@ const KanbanCard: React.FC<KanbanCardProps> = ({
   onDeadlineChange,
   onEdit,
 }) => {
+  const lastMod = formatTaskLastModified(task.updatedAt, task.createdAt);
+
   return (
     <div
       className={`p-3.5 rounded-xl border transition-all space-y-2.5 shadow-sm group ${
@@ -2306,6 +2594,11 @@ const KanbanCard: React.FC<KanbanCardProps> = ({
         {task.observations}
       </p>
 
+      <div className="text-[10px] font-mono text-neutral-500 tabular-nums">
+        Últ. modif.: {lastMod.dateLabel}
+        {lastMod.timeLabel ? ` · ${lastMod.timeLabel}` : ''}
+      </div>
+
       <div className="flex items-center justify-between text-[10px] text-neutral-500 pt-1.5 border-t border-neutral-900 gap-2">
         <div className="flex items-center gap-1 font-mono bg-neutral-900/90 px-1.5 py-0.5 rounded border border-neutral-800 hover:border-cyan-500/40">
           <Calendar className="w-3 h-3 text-cyan-400 shrink-0" />
@@ -2314,7 +2607,7 @@ const KanbanCard: React.FC<KanbanCardProps> = ({
             value={task.deadline}
             onChange={(e) => onDeadlineChange(task.id, e.target.value)}
             className="bg-transparent text-[10px] text-neutral-300 focus:outline-none cursor-pointer w-24 tabular-nums"
-            title="Modificar fecha límite"
+            title="Modificar fecha de entrega"
           />
         </div>
 

@@ -2,7 +2,13 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
-import { VictorTask, TaskPriority, TaskRequester, TaskStatus } from './types/flow';
+import {
+  VictorTask,
+  TaskPriority,
+  TaskRequester,
+  TaskStatus,
+  TaskSortOption,
+} from './types/flow';
 
 // Initialize Firebase App, Firestore (with explicit database ID), and Auth
 const app = initializeApp(firebaseConfig);
@@ -173,6 +179,140 @@ export function sanitizeDecisionText(
   return cleaned.length >= 1 ? cleaned : fallback.slice(0, MAX_DECISION_TEXT_LENGTH);
 }
 
+export function extractFirestoreTimestampIso(rawTs: unknown): string | undefined {
+  if (!rawTs) return undefined;
+  if (typeof rawTs === 'string') {
+    const trimmed = rawTs.trim();
+    if (DATE_REGEX.test(trimmed)) return trimmed;
+    const parsed = Date.parse(trimmed);
+    if (!Number.isNaN(parsed)) return new Date(parsed).toISOString();
+    return undefined;
+  }
+  if (typeof rawTs === 'number' && Number.isFinite(rawTs)) {
+    return new Date(rawTs).toISOString();
+  }
+  if (typeof rawTs === 'object' && rawTs !== null) {
+    const maybeToDate = (rawTs as { toDate?: () => Date }).toDate;
+    if (typeof maybeToDate === 'function') {
+      try {
+        return maybeToDate.call(rawTs).toISOString();
+      } catch {
+        // ignore
+      }
+    }
+    const seconds = (rawTs as { seconds?: number }).seconds;
+    if (typeof seconds === 'number') {
+      return new Date(seconds * 1000).toISOString();
+    }
+  }
+  return undefined;
+}
+
+export function formatTaskLastModified(
+  updatedAt?: string,
+  fallbackCreatedAt?: string
+): { dateLabel: string; timeLabel: string | null; sortMs: number } {
+  const source = updatedAt || fallbackCreatedAt || '2026-10-28';
+  const trimmed = source.trim();
+
+  // YYYY-MM-DD date-only string: parse locally without UTC-3 midnight shift
+  if (DATE_REGEX.test(trimmed)) {
+    const [yyyy, mm, dd] = trimmed.split('-');
+    const localMs = new Date(Number(yyyy), Number(mm) - 1, Number(dd), 12, 0, 0).getTime();
+    return {
+      dateLabel: `${dd}/${mm}/${yyyy}`,
+      timeLabel: null,
+      sortMs: Number.isNaN(localMs) ? 0 : localMs,
+    };
+  }
+
+  const parsedMs = Date.parse(trimmed);
+  if (!Number.isNaN(parsedMs)) {
+    const d = new Date(parsedMs);
+    const dateLabel = d.toLocaleDateString('es-AR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+    const timeStr = d.toLocaleTimeString('es-AR', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+    return {
+      dateLabel,
+      timeLabel: `${timeStr} hs`,
+      sortMs: parsedMs,
+    };
+  }
+
+  return {
+    dateLabel: '28/10/2026',
+    timeLabel: null,
+    sortMs: 0,
+  };
+}
+
+const PRIORITY_RANK: Record<TaskPriority, number> = {
+  urgente: 0,
+  alta: 1,
+  media: 2,
+  baja: 3,
+};
+
+const esAlphaCollator = new Intl.Collator('es', {
+  numeric: true,
+  sensitivity: 'base',
+});
+
+export function sortVictorTasks(
+  list: VictorTask[],
+  sortBy: TaskSortOption
+): VictorTask[] {
+  const copy = [...list];
+  copy.sort((a, b) => {
+    switch (sortBy) {
+      case 'deadline_asc': {
+        const cmp = a.deadline.localeCompare(b.deadline);
+        if (cmp !== 0) return cmp;
+        const prioCmp = PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority];
+        if (prioCmp !== 0) return prioCmp;
+        return esAlphaCollator.compare(a.title, b.title);
+      }
+      case 'deadline_desc': {
+        const cmp = b.deadline.localeCompare(a.deadline);
+        if (cmp !== 0) return cmp;
+        const prioCmp = PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority];
+        if (prioCmp !== 0) return prioCmp;
+        return esAlphaCollator.compare(a.title, b.title);
+      }
+      case 'title_asc': {
+        const cmp = esAlphaCollator.compare(a.title, b.title);
+        if (cmp !== 0) return cmp;
+        return a.deadline.localeCompare(b.deadline);
+      }
+      case 'title_desc': {
+        const cmp = esAlphaCollator.compare(b.title, a.title);
+        if (cmp !== 0) return cmp;
+        return a.deadline.localeCompare(b.deadline);
+      }
+      case 'updated_desc': {
+        const msA = formatTaskLastModified(a.updatedAt, a.createdAt).sortMs;
+        const msB = formatTaskLastModified(b.updatedAt, b.createdAt).sortMs;
+        if (msB !== msA) return msB - msA;
+        return a.deadline.localeCompare(b.deadline);
+      }
+      case 'updated_asc': {
+        const msA = formatTaskLastModified(a.updatedAt, a.createdAt).sortMs;
+        const msB = formatTaskLastModified(b.updatedAt, b.createdAt).sortMs;
+        if (msA !== msB) return msA - msB;
+        return a.deadline.localeCompare(b.deadline);
+      }
+    }
+  });
+  return copy;
+}
+
 export function sanitizeTaskFields(task: VictorTask): VictorTask {
   const id = sanitizeId(task.id);
   const title = (task.title || 'Solicitud Owl').trim().slice(0, MAX_TITLE_LENGTH) || 'Solicitud Owl';
@@ -193,6 +333,7 @@ export function sanitizeTaskFields(task: VictorTask): VictorTask {
       .slice(0, MAX_OBSERVATIONS_LENGTH) || 'Sin observaciones registradas todavía.';
   const specs = (task.specs || '').trim().slice(0, MAX_SPECS_LENGTH);
   const createdAt = sanitizeDate(task.createdAt, new Date().toISOString().split('T')[0]);
+  const updatedAt = extractFirestoreTimestampIso(task.updatedAt);
 
   return {
     id,
@@ -205,6 +346,7 @@ export function sanitizeTaskFields(task: VictorTask): VictorTask {
     observations,
     specs,
     createdAt,
+    ...(updatedAt ? { updatedAt } : {}),
     ...(task.createdByUid ? { createdByUid: sanitizeId(task.createdByUid) } : {}),
   };
 }
